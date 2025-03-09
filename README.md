@@ -23,7 +23,7 @@ for deleting container:
 docker stop mysql-container
 docker rm mysql-container
 
-
+docker start mysql-container
 
 
 

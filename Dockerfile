@@ -4,3 +4,4 @@ ENV MYSQL_DATABASE=Grocery
 
 EXPOSE 3307
 COPY init.sql /docker-entrypoint-initdb.d/
+
