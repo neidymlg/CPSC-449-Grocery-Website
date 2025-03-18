@@ -7,7 +7,52 @@
     <title>Affordable Groceries</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <!--delete this later, this is just a test for connecting backend to frontend-->
+    <div id="ids"></div>
+    <div id="product"></div>
+    <script>
+      document.addEventListener('DOMContentLoaded', async () => {
+        try {
+          const response = await fetch('/api/addProduct', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              pname: 'ex4', 
+            }),
+          });
+          const data = await response.json();
+          console.log('Product added:');
+        } catch (error) {
+          console.log('Error fetching IDs:', error);
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', async () => {
+          try {
+              const response = await fetch('/api/ids');
+              const ids = await response.json();
+              document.getElementById('ids').innerText = JSON.stringify(ids);
+          } catch (error) {
+             console.log('Error fetching IDs:', error);
+          }
+      });
+
+      document.addEventListener('DOMContentLoaded', async () => {
+          try {
+              const response = await fetch('/api/info');
+              const product = await response.json();
+              document.getElementById('product').innerText = JSON.stringify(product);
+          } catch (error) {
+             console.log('Error fetching product:', error);
+          }
+      });
+  </script>
+  <!-- End of deletion-->
+
+
+    <!-- <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script> -->
   </body>
 </html>
