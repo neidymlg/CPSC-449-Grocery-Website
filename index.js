@@ -8,36 +8,23 @@ const _dirname = path.dirname(_filename);
 import { startPool, testConnection, closePool, addProduct } from './Grocery_db.js';
 const app = express();
 const port = 3000;
+const db = require('./models');
+const routes = require('./routes'); // Import the main routes file
 
-app.use(express.static(path.join(_dirname, 'client')));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.post('/api/addProduct', async (req, res) => {
-  const connection = await startPool();
-  const pname = req.body.pname; 
-  const id = await addProduct(connection, pname);
-  console.log("Product ID:", id);
-  await closePool(connection);
-  res.sendStatus(200);
-});
+// Mount the routes
+app.use('/', routes);
 
-//test connection to database
-app.get('/api/ids', async(req, res) => {
-  const connection = await startPool();
-  const ids = await testConnection(connection);
-  await closePool(connection);
-  res.json(ids);
-});
-
-app.get('/api/info', (req, res) => {
-  res.json({ message: 'Hello from the server!' });
-});
-
-app.get('/index', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
-});
-
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
-});
-
+// Test the database connection
+db.sequelize.authenticate()
+  .then(() => {
+    console.log('Database connection has been established successfully.');
+    app.listen(port, () => {
+      console.log(`Server listening at http://localhost:${port}`);
+    });
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
