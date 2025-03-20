@@ -6,8 +6,8 @@ const sequelize = new Sequelize(
   process.env.DB_USER,
   process.env.DB_PASSWORD,
   {
-    host: "127.0.0.1",
-    port: 3307,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
     dialect: "mysql",
     logging: console.log, // Set to false to disable logging
   }
