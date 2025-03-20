@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3307;
 const db = require('./models');
 const routes = require('./routes'); // Import the main routes file
 
