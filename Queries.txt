@@ -1,0 +1,24 @@
+//Count how many are near the User's previous Locations and if it is more than 1, then correct
+// Find 75 percent of radius (1000)
+SELECT COUNT(*) FROM (
+SELECT ST_Distance_Sphere(user_loc, POINT(23.00, 10.00)) AS distance
+FROM User_Location
+HAVING distance < 750) AS Amount_Nearby;
+
+
+//Select all Stores close to the User
+SELECT ID
+FROM Store
+WHERE ST_Distance_Sphere(geom_loc, POINT(23.00, 10.00)) < 750;
+
+//Check Product 
+SELECT ID FROM Product WHERE Name = "Milk";
+
+UPDATE Item 
+SET Price = 11, TS = CURRENT_TIMESTAMP WHERE ID = 1;
+
+SELECT *
+FROM Item
+WHERE DATE(TS) = CURDATE() AND ID = "";
+
+SELECT * FROM ITEM WHERE Store_ID = 1 AND Product_ID = 1;

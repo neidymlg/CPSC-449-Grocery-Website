@@ -11,10 +11,27 @@ CREATE TABLE IF NOT EXISTS Store(
 	ID INT AUTO_INCREMENT PRIMARY KEY, 
 	geom_loc POINT NOT NULL,
 	Name VARCHAR(50) NOT NULL, 
-	UNIQUE (geom_loc, Name),
 	SPATIAL INDEX (geom_loc)
 );
 
+DELIMITER //
+
+CREATE TRIGGER before_insert_store
+BEFORE INSERT ON Store
+FOR EACH ROW
+BEGIN
+    DECLARE duplicate INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO duplicate
+    FROM Store
+    WHERE Name = NEW.Name AND ST_Equals(geom_loc, NEW.geom_loc);
+
+    IF duplicate > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Duplicate store name and location';
+    END IF;
+END //
+
+DELIMITER ; //
 
 CREATE TABLE IF NOT EXISTS Product(
 	ID INT AUTO_INCREMENT PRIMARY KEY,
@@ -26,22 +43,13 @@ CREATE TABLE IF NOT EXISTS Item(
 	ID INT AUTO_INCREMENT, 
 	Store_ID INT, 
 	Product_ID INT, 
-	Name VARCHAR(30) NOT NULL UNIQUE,
-	PRIMARY KEY (ID, Store_ID, Product_ID),
-	FOREIGN KEY (Store_ID) REFERENCES Store(ID),
-	FOREIGN KEY (Product_ID) REFERENCES Product(ID)
-);
-
-
-CREATE TABLE IF NOT EXISTS Price(
-	ID INT AUTO_INCREMENT,
-	Item_ID INT,
-	Store_ID INT, 
-	Product_ID INT, 
+	Name VARCHAR(30) NOT NULL,
 	Price Decimal(5, 2) UNSIGNED NOT NULL,
 	TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	PRIMARY KEY (ID, Item_ID, Store_ID, Product_ID),
-	FOREIGN KEY (Item_ID, Store_ID, Product_ID) REFERENCES Item(ID, Store_ID, Product_ID)
+	PRIMARY KEY (ID, Store_ID, Product_ID),
+	FOREIGN KEY (Store_ID) REFERENCES Store(ID),
+	FOREIGN KEY (Product_ID) REFERENCES Product(ID),
+	UNIQUE (Store_ID, Product_ID, Name)
 );
 
 
@@ -75,4 +83,4 @@ CREATE TABLE IF NOT EXISTS User_Location(
 	user_loc POINT NOT NULL,
 	FOREIGN KEY (User_ID) REFERENCES User(ID),
 	SPATIAL INDEX (user_loc)
-)
+);
