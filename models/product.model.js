@@ -1,13 +1,22 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/database'); // Adjust the path as necessary
 
-// models/product.model.js
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize) => {
   const Product = sequelize.define('Product', {
-    Name: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
+    ID: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
     },
+    Name: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      unique: true,
+    },
+  }, {
+    tableName: 'Product',
+    timestamps: false,
   });
+
   return Product;
 };

@@ -59,40 +59,40 @@ async function closePool(connection) {
 */
 // After user searches Product, it will be added into the db
 // Return the ID of the Store so we can insert into Item table
-async function addProduct(connection, pname){
-    try {
-        const [result, fields] = await connection.query('INSERT INTO Product (Name) VALUES (?)', pname);
-        console.log("Product added:", result.insertId);
-        return result.insertId;
-    } catch (error) {
-        console.error("Error adding product:", error);
-    }
-}
+// async function addProduct(connection, pname){
+//     try {
+//         const [result, fields] = await connection.query('INSERT INTO Product (Name) VALUES (?)', pname);
+//         console.log("Product added:", result.insertId);
+//         return result.insertId;
+//     } catch (error) {
+//         console.error("Error adding product:", error);
+//     }
+// }
 
 // For each Store, add the location and name
 // Return the ID of the Store so we can insert into Item table
-async function addStore(connection, storeJson){
-    try {
-        const { LONG, LAT, Name } = storeJson;
-        const [result, fields] = await connection.query('INSERT INTO Store (geom_loc, Name) VALUES (Point(?, ?), ?)', [LONG, LAT, Name]);
-        console.log("Store added:", result.insertId);
-        return result.insertId;
-    } catch (error) {
-        console.error("Error adding store:", error);
-    }
-}
+// async function addStore(connection, storeJson){
+//     try {
+//         const { LONG, LAT, Name } = storeJson;
+//         const [result, fields] = await connection.query('INSERT INTO Store (geom_loc, Name) VALUES (Point(?, ?), ?)', [LONG, LAT, Name]);
+//         console.log("Store added:", result.insertId);
+//         return result.insertId;
+//     } catch (error) {
+//         console.error("Error adding store:", error);
+//     }
+// }
 
 // For each Item (from Store and Product), add the name and ID
-async function addItem(connection, itemJson){
-    try {
-        const { StoreID, ProductID, Name, Price } = itemJson;
-        const [result, fields] = await connection.query('INSERT INTO Item (Store_ID, Product_ID, Name, Price) VALUES (?, ?, ?, ?)', [StoreID, ProductID, Name, Price]);
-        console.log("Store item added:", result.insertId);
-        return result.insertId;
-    } catch (error) {
-        console.error("Error adding store item:", error);
-    }
-}
+// async function addItem(connection, itemJson){
+//     try {
+//         const { StoreID, ProductID, Name, Price } = itemJson;
+//         const [result, fields] = await connection.query('INSERT INTO Item (Store_ID, Product_ID, Name, Price) VALUES (?, ?, ?, ?)', [StoreID, ProductID, Name, Price]);
+//         console.log("Store item added:", result.insertId);
+//         return result.insertId;
+//     } catch (error) {
+//         console.error("Error adding store item:", error);
+//     }
+// }
 
 // Adds in User 
 // Might need to return ID for Order table
@@ -157,42 +157,42 @@ async function checkUserLocation(connection, LONG, LAT){
     }
 }
 
-async function checkStoreLocation(connection, LONG, LAT){
-    try {
-        const [results, fields] = await connection.query('SELECT ID FROM Store WHERE ST_Distance_Sphere(geom_loc, POINT(?, ?)) < 750;', [LONG, LAT]);
-        return results;
-    } catch (error) {
-        console.error("Error checking location:", error);
-    }
-}
+// async function checkStoreLocation(connection, LONG, LAT){
+//     try {
+//         const [results, fields] = await connection.query('SELECT ID FROM Store WHERE ST_Distance_Sphere(geom_loc, POINT(?, ?)) < 750;', [LONG, LAT]);
+//         return results;
+//     } catch (error) {
+//         console.error("Error checking location:", error);
+//     }
+// }
 
-async function checkProduct(connection, pname){
-    try {
-        const [results, fields] = await connection.query('SELECT ID FROM Product WHERE Name = ?', pname);
-        return results;
-    } catch (error) {
-        console.error("Error checking product:", error);
-    }
-}
+// async function checkProduct(connection, pname){
+//     try {
+//         const [results, fields] = await connection.query('SELECT ID FROM Product WHERE Name = ?', pname);
+//         return results;
+//     } catch (error) {
+//         console.error("Error checking product:", error);
+//     }
+// }
 
-async function checkItem(connection, StoreID, ProductID){
-    try {
-        const [results, fields] = await connection.query('SELECT Name, Price FROM Item WHERE Store_ID = ? AND Product_ID = ?', [StoreID, ProductID]);
-        return results;
-    } catch (error) {
-        console.error("Error checking item:", error);
-    }
-}
+// async function checkItem(connection, StoreID, ProductID){
+//     try {
+//         const [results, fields] = await connection.query('SELECT Name, Price FROM Item WHERE Store_ID = ? AND Product_ID = ?', [StoreID, ProductID]);
+//         return results;
+//     } catch (error) {
+//         console.error("Error checking item:", error);
+//     }
+// }
 
 //items that have not been refreshed
-async function checkcurrDayItem(connection, StoreID, ProductID){
-    try {
-        const [results, fields] = await connection.query('SELECT Name, Price FROM Item WHERE Store_ID = ? AND Product_ID = ? AND DATE(Date) != CURDATE()', [StoreID, ProductID]);
-        return results;
-    } catch (error) {
-        console.error("Error checking item:", error);
-    }
-}
+// async function checkcurrDayItem(connection, StoreID, ProductID){
+//     try {
+//         const [results, fields] = await connection.query('SELECT Name, Price FROM Item WHERE Store_ID = ? AND Product_ID = ? AND DATE(Date) != CURDATE()', [StoreID, ProductID]);
+//         return results;
+//     } catch (error) {
+//         console.error("Error checking item:", error);
+//     }
+// }
 
 
 

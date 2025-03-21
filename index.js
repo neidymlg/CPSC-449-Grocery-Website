@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 const port = 3000;
 const db = require('./models');
@@ -9,6 +10,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Mount the routes
 app.use('/', routes);
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/items.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'items.html'));
+});
+
+app.get('/', (req, res) => {
+  res.redirect('/items.html');
+});
 
 // Test the database connection
 db.sequelize.authenticate()

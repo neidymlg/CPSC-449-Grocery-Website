@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Items</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Items</h1>
+  <form id="item-form">
+    <label for="store-id">Store ID:</label>
+    <input type="text" id="store-id" name="store-id" required>
+    <label for="product-id">Product ID:</label>
+    <input type="text" id="product-id" name="product-id" required>
+    <button type="submit">Fetch Items</button>
+  </form>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody id="items-table-body">
+      <!-- Items will be populated here -->
+    </tbody>
+  </table>
+
+  <script>
+    document.getElementById('item-form').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const storeId = document.getElementById('store-id').value;
+      const productId = document.getElementById('product-id').value;
+
+      try {
+        const response = await fetch(`/items/check?StoreID=${storeId}&ProductID=${productId}`);
+        const items = await response.json();
+        const tableBody = document.getElementById('items-table-body');
+        tableBody.innerHTML = ''; // Clear previous results
+        items.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.Name}</td>
+            <td>${item.Price}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching items:', error);
+      }
+    });
+  </script>
+</body>
+</html>
