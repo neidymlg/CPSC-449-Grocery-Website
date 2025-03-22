@@ -1,8 +1,11 @@
-import React, { useState } from "react";
-// import { useNavigate } from "react-router-dom";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 
-const RouteComponent = () => {
+export const Route = createFileRoute("/create-account")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -10,7 +13,7 @@ const RouteComponent = () => {
     <div className="max-w-sm mx-auto">
       <form>
         <div className="mb-5">
-          <h1 className="text-4xl text-center mb-5 text-gray-900"> Log in</h1>
+          <h1 className="text-4xl text-center mb-5 text-gray-900">Create an Account</h1>
 
           <label
             htmlFor="email"
@@ -68,15 +71,11 @@ const RouteComponent = () => {
         </button>
       </form>
       <Link
-        to="/create-account"
+        to="/login"
         className="font-medium text-blue-600 hover:underline"
       >
-        Create an Account
+        Already have an account? Log in
       </Link>
     </div>
   );
-};
-
-export const Route = createFileRoute("/login")({
-  component: RouteComponent,
-});
+}
