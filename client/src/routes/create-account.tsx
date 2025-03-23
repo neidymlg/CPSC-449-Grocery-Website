@@ -1,17 +1,41 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/create-account")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const [responseMessage, setResponseMessage] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("/user/register", formData);
+      setResponseMessage(response.data.message);
+      alert("success");
+    } catch (error) {
+      setResponseMessage("Error creating account " + error);
+      console.error(error);
+    }
+  };
 
   return (
     <div className="max-w-sm mx-auto">
-      <form>
+      <form onSubmit={handleSubmit}>
         <div className="mb-5">
           <h1 className="text-4xl text-center mb-5 text-gray-900">
             Create an Account
@@ -26,10 +50,11 @@ function RouteComponent() {
           <input
             type="email"
             id="email"
+            name="email"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             placeholder=""
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
             required
           />
         </div>
@@ -43,9 +68,10 @@ function RouteComponent() {
           <input
             type="password"
             id="password"
+            name="password"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
             required
           />
         </div>
@@ -56,6 +82,7 @@ function RouteComponent() {
           Create Account
         </button>
       </form>
+      {responseMessage && <p className="text-red-400">{responseMessage}</p>}
       <Link to="/login" className="font-medium text-blue-600 hover:underline">
         Already have an account? Log in
       </Link>
