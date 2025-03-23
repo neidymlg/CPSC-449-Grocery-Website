@@ -1,7 +1,7 @@
 # CPSC 449 Project: Affordable Groceries
 
-As a passionate team of California State University, Fullerton students,
-our mission here at Affordable Groceries is to provide you with the best
+As a passionate team of CSUF (California State University, Fullerton) students,
+we endeavor to provide you with the best
 deals and ensure you get the most value for your money.  
 
 Affordable Groceries seeks to help you find the most affordable items,
