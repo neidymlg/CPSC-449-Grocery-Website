@@ -13,7 +13,9 @@ function RouteComponent() {
     <div className="max-w-sm mx-auto">
       <form>
         <div className="mb-5">
-          <h1 className="text-4xl text-center mb-5 text-gray-900">Create an Account</h1>
+          <h1 className="text-4xl text-center mb-5 text-gray-900">
+            Create an Account
+          </h1>
 
           <label
             htmlFor="email"
@@ -47,33 +49,14 @@ function RouteComponent() {
             required
           />
         </div>
-        <div className="flex items-start mb-5">
-          <div className="flex items-center h-5">
-            <input
-              id="remember"
-              type="checkbox"
-              value=""
-              className="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700"
-            />
-          </div>
-          <label
-            htmlFor="remember"
-            className="ms-2 mb-2 text-sm font-medium text-gray-900"
-          >
-            Remember me
-          </label>
-        </div>
         <button
           type="submit"
           className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-lg w-full sm:w-auto px-7 py-3 text-center mb-5"
         >
-          Login
+          Create Account
         </button>
       </form>
-      <Link
-        to="/login"
-        className="font-medium text-blue-600 hover:underline"
-      >
+      <Link to="/login" className="font-medium text-blue-600 hover:underline">
         Already have an account? Log in
       </Link>
     </div>
