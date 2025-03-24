@@ -79,8 +79,6 @@ router.put('/products/:id', async (req, res) => {
   if (!name) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  
-  name = name.toLowerCase();
 
   try {
     const product = await Product.findByPk(productId);
