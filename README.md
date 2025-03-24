@@ -16,3 +16,5 @@ Then run `npm run dev` in the root directory.
 
 
 
+docker stop mysql-container docker rm mysql-container docker build -t my-mysql . docker run --name mysql-container -p 3308:3306 -d my-mysql 
+docker exec -it mysql-container mysql -u root -p

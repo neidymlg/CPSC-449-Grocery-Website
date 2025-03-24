@@ -1,31 +1,22 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/database'); // Adjust the path as necessary
 
-const Product = sequelize.define('Product', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  price: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-  },
-  quantity: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-}, {
-  tableName: 'products', // Specify the table name if it's different from the model name
-  timestamps: false, // Disable timestamps (createdAt, updatedAt) if you don't need them
-});
+module.exports = (sequelize) => {
+  const Product = sequelize.define('Product', {
+    ID: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    Name: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      unique: true,
+    },
+  }, {
+    tableName: 'Product',
+    timestamps: false,
+  });
 
-module.exports = Product;
+  return Product;
+};

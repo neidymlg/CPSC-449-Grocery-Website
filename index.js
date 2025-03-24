@@ -4,12 +4,14 @@ const app = express();
 const port = process.env.PORT || 3307;
 const db = require('./models');
 const routes = require('./routes'); // Import the main routes file
+const productsRoute = require('./routes/products'); // Import the products route
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Mount the routes
 app.use('/', routes);
+
 
 // Test the database connection
 db.sequelize.authenticate()

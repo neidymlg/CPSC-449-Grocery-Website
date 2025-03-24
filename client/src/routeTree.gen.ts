@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as LoginImport } from './routes/login'
+import { Route as FindproductImport } from './routes/findproduct'
 import { Route as CreateAccountImport } from './routes/create-account'
 import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
@@ -21,6 +22,12 @@ import { Route as IndexImport } from './routes/index'
 const LoginRoute = LoginImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const FindproductRoute = FindproductImport.update({
+  id: '/findproduct',
+  path: '/findproduct',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -67,6 +74,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateAccountImport
       parentRoute: typeof rootRoute
     }
+    '/findproduct': {
+      id: '/findproduct'
+      path: '/findproduct'
+      fullPath: '/findproduct'
+      preLoaderRoute: typeof FindproductImport
+      parentRoute: typeof rootRoute
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -83,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
+  '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
 }
 
@@ -90,6 +105,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
+  '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
 }
 
@@ -98,15 +114,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
+  '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/create-account' | '/login'
+  fullPaths: '/' | '/about' | '/create-account' | '/findproduct' | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/create-account' | '/login'
-  id: '__root__' | '/' | '/about' | '/create-account' | '/login'
+  to: '/' | '/about' | '/create-account' | '/findproduct' | '/login'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/create-account'
+    | '/findproduct'
+    | '/login'
   fileRoutesById: FileRoutesById
 }
 
@@ -114,6 +137,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CreateAccountRoute: typeof CreateAccountRoute
+  FindproductRoute: typeof FindproductRoute
   LoginRoute: typeof LoginRoute
 }
 
@@ -121,6 +145,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CreateAccountRoute: CreateAccountRoute,
+  FindproductRoute: FindproductRoute,
   LoginRoute: LoginRoute,
 }
 
@@ -137,6 +162,7 @@ export const routeTree = rootRoute
         "/",
         "/about",
         "/create-account",
+        "/findproduct",
         "/login"
       ]
     },
@@ -148,6 +174,9 @@ export const routeTree = rootRoute
     },
     "/create-account": {
       "filePath": "create-account.tsx"
+    },
+    "/findproduct": {
+      "filePath": "findproduct.tsx"
     },
     "/login": {
       "filePath": "login.tsx"
