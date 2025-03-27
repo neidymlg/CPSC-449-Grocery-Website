@@ -13,8 +13,11 @@ foods at the best prices. We want you to eat healthy without breaking the bank. 
 Run `npm install` in both the root and `client` directories. \
 Then run `npm run dev` in the root directory.
 
-
-
-
-docker stop mysql-container docker rm mysql-container docker build -t my-mysql . docker run --name mysql-container -p 3308:3306 -d my-mysql 
+## Instructions for starting Docker for Website 
+docker build -t my-mysql . 
+docker run --name mysql-container -p 3308:3306 -d my-mysql 
 docker exec -it mysql-container mysql -u root -p
+
+### Instructions for Deleting Docker 
+    docker stop mysql-container 
+    docker rm mysql-container 

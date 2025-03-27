@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -9,6 +9,7 @@ export const Route = createFileRoute("/findproduct")({
 function RouteComponent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<{ id: number, name: string }[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch products from the database
@@ -32,16 +33,35 @@ function RouteComponent() {
   const handleAddProduct = async () => {
     if (searchTerm.trim() !== "") {
       try {
-        const response = await axios.post("/api/products", { name: searchTerm.toLowerCase() });
-        console.log("Added product:", response.data); // Debugging log
-        setProducts([...products, response.data]);
-        setSearchTerm("");
+        const exProduct = products.find(
+          (product) => product.name.toLowerCase() === searchTerm
+        );
+  
+        if (exProduct) {
+          console.log("Product already exists:", exProduct);
+          navigate({
+            to: "/display-item",
+            params: { id: exProduct.id, name: exProduct.name}, 
+          });
+        } else {
+          const response = await axios.post("/api/products", {
+            name: searchTerm.toLowerCase(),
+          });
+          console.log("Added product:", response.data);
+          setProducts([...products, response.data]);
+          setSearchTerm("");
+          navigate({
+            to: "/display-item",
+            params: { id: response.data.id, name: response.data.name },
+          });
+        }
       } catch (error) {
         console.error("Error adding product:", error);
       }
     }
   };
 
+  
   return (
     <div>
       <section className="text-center mb-10">
