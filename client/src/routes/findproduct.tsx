@@ -23,7 +23,29 @@ function RouteComponent() {
       }
     };
 
+    const fetchLatLong = async () => {
+      alert("Please provide your current location to find Grocery stores near you.")
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            console.log("Latitude:", latitude, "Longitude:", longitude);
+            alert(`Your location: Latitude ${latitude}, Longitude ${longitude}`);
+          },
+          (error) => {
+            console.error("Error getting location:", error.message);
+            alert("Unable to retrieve your location.");
+          }
+        );
+      } else {
+        console.error("Geolocation is not supported by this browser.");
+        alert("Geolocation is not supported by your browser.");
+      }
+    };
+
     fetchProducts();
+    fetchLatLong();
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
