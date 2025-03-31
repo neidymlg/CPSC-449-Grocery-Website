@@ -46,6 +46,7 @@ passport.deserializeUser(async (id, done) => {
 // --- User Registration Route ---
 router.post('/register', async (req, res) => {
   try {
+    console.log("Request Body: ", req.body);
     const { email, password } = req.body;
 
     // Check if user already exists

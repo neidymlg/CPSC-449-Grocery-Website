@@ -12,7 +12,7 @@ function RouteComponent() {
     password: "",
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prevState) => ({
       ...prevState,
       [e.target.name]: e.target.value,
@@ -21,14 +21,29 @@ function RouteComponent() {
 
   const [responseMessage, setResponseMessage] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     try {
       const response = await axios.post("/user/register", formData);
       setResponseMessage(response.data.message);
-      alert("success");
-    } catch (error) {
-      setResponseMessage("Error creating account " + error);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          const errorMessage =
+            error.response.data.error ||
+            error.response.data.message ||
+            error.message; //Try to get a more descriptive error message
+          console.error("Server Response:", error.response.data);
+          setResponseMessage("Error creating account: " + errorMessage);
+        } else if (error.request) {
+          console.error("No response received:", error.request);
+          setResponseMessage("Error creating account: No response from server");
+        }
+      } else {
+        setResponseMessage("Error creating account " + error);
+      }
       console.error(error);
     }
   };
