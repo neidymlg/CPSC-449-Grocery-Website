@@ -9,6 +9,8 @@ export const Route = createFileRoute("/findproduct")({
 function RouteComponent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<{ id: number, name: string }[]>([]);
+  const [latitude, setLatitude] = useState<string | null>(null);
+  const [longitude, setLongitude] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,23 +26,39 @@ function RouteComponent() {
     };
 
     const fetchLatLong = async () => {
-      alert("Please provide your current location to find Grocery stores near you.")
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            console.log("Latitude:", latitude, "Longitude:", longitude);
-            alert(`Your location: Latitude ${latitude}, Longitude ${longitude}`);
-          },
-          (error) => {
-            console.error("Error getting location:", error.message);
-            alert("Unable to retrieve your location.");
-          }
+      const storedLatitude = sessionStorage.getItem("latitude");
+      const storedLongitude = sessionStorage.getItem("longitude");
+    
+      if (storedLatitude && storedLongitude) {
+        console.log(
+          "Using stored location:",
+          `Latitude: ${storedLatitude}, Longitude: ${storedLongitude}`
         );
-      } else {
-        console.error("Geolocation is not supported by this browser.");
-        alert("Geolocation is not supported by your browser.");
+        alert(`Stored Latitude: ${storedLatitude}, Longitude: ${storedLongitude}`);
+      }
+      else{
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const lat = position.coords.latitude;
+              const lon = position.coords.longitude;
+              console.log("Latitude:", lat, "Longitude:", lon);
+              alert(`Your location: Latitude ${lat}, Longitude ${lon}`);
+
+              setLatitude(storedLatitude); // Update state
+              setLongitude(storedLongitude); // Update state      
+              sessionStorage.setItem("latitude", lat.toString()); // Store in sessionStorage
+              sessionStorage.setItem("longitude", lon.toString()); // Store in sessionStorage
+             },
+            (error) => {
+              console.error("Error getting location:", error.message);
+              alert("Unable to retrieve your location.");
+            }
+          );
+        } else {
+          console.error("Geolocation is not supported by this browser.");
+          alert("Geolocation is not supported by your browser.");
+        }
       }
     };
 
@@ -62,8 +80,8 @@ function RouteComponent() {
         if (exProduct) {
           console.log("Product already exists:", exProduct);
           navigate({
-            to: "/display-item",
-            params: { id: exProduct.id, name: exProduct.name}, 
+            to: "/display-items/$id", // No dynamic parameters in the path
+            params: { id: exProduct.id.toString() }, // Pass query parameters
           });
         } else {
           const response = await axios.post("/api/products", {
@@ -73,8 +91,8 @@ function RouteComponent() {
           setProducts([...products, response.data]);
           setSearchTerm("");
           navigate({
-            to: "/display-item",
-            params: { id: response.data.id, name: response.data.name },
+            to: "/display-items/$id", // No dynamic parameters in the path
+            params: { id: response.data.id}, // Pass query parameters
           });
         }
       } catch (error) {

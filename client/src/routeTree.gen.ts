@@ -13,10 +13,10 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as LoginImport } from './routes/login'
 import { Route as FindproductImport } from './routes/findproduct'
-import { Route as DisplayItemImport } from './routes/display-item'
 import { Route as CreateAccountImport } from './routes/create-account'
 import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
+import { Route as DisplayItemsIdImport } from './routes/display-items/$id'
 
 // Create/Update Routes
 
@@ -29,12 +29,6 @@ const LoginRoute = LoginImport.update({
 const FindproductRoute = FindproductImport.update({
   id: '/findproduct',
   path: '/findproduct',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const DisplayItemRoute = DisplayItemImport.update({
-  id: '/display-item',
-  path: '/display-item',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -53,6 +47,12 @@ const AboutRoute = AboutImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DisplayItemsIdRoute = DisplayItemsIdImport.update({
+  id: '/display-items/$id',
+  path: '/display-items/$id',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -81,13 +81,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateAccountImport
       parentRoute: typeof rootRoute
     }
-    '/display-item': {
-      id: '/display-item'
-      path: '/display-item'
-      fullPath: '/display-item'
-      preLoaderRoute: typeof DisplayItemImport
-      parentRoute: typeof rootRoute
-    }
     '/findproduct': {
       id: '/findproduct'
       path: '/findproduct'
@@ -102,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginImport
       parentRoute: typeof rootRoute
     }
+    '/display-items/$id': {
+      id: '/display-items/$id'
+      path: '/display-items/$id'
+      fullPath: '/display-items/$id'
+      preLoaderRoute: typeof DisplayItemsIdImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -111,18 +111,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
-  '/display-item': typeof DisplayItemRoute
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
+  '/display-items/$id': typeof DisplayItemsIdRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
-  '/display-item': typeof DisplayItemRoute
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
+  '/display-items/$id': typeof DisplayItemsIdRoute
 }
 
 export interface FileRoutesById {
@@ -130,9 +130,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
-  '/display-item': typeof DisplayItemRoute
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
+  '/display-items/$id': typeof DisplayItemsIdRoute
 }
 
 export interface FileRouteTypes {
@@ -141,25 +141,25 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/create-account'
-    | '/display-item'
     | '/findproduct'
     | '/login'
+    | '/display-items/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/create-account'
-    | '/display-item'
     | '/findproduct'
     | '/login'
+    | '/display-items/$id'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/create-account'
-    | '/display-item'
     | '/findproduct'
     | '/login'
+    | '/display-items/$id'
   fileRoutesById: FileRoutesById
 }
 
@@ -167,18 +167,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CreateAccountRoute: typeof CreateAccountRoute
-  DisplayItemRoute: typeof DisplayItemRoute
   FindproductRoute: typeof FindproductRoute
   LoginRoute: typeof LoginRoute
+  DisplayItemsIdRoute: typeof DisplayItemsIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CreateAccountRoute: CreateAccountRoute,
-  DisplayItemRoute: DisplayItemRoute,
   FindproductRoute: FindproductRoute,
   LoginRoute: LoginRoute,
+  DisplayItemsIdRoute: DisplayItemsIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -194,9 +194,9 @@ export const routeTree = rootRoute
         "/",
         "/about",
         "/create-account",
-        "/display-item",
         "/findproduct",
-        "/login"
+        "/login",
+        "/display-items/$id"
       ]
     },
     "/": {
@@ -208,14 +208,14 @@ export const routeTree = rootRoute
     "/create-account": {
       "filePath": "create-account.tsx"
     },
-    "/display-item": {
-      "filePath": "display-item.tsx"
-    },
     "/findproduct": {
       "filePath": "findproduct.tsx"
     },
     "/login": {
       "filePath": "login.tsx"
+    },
+    "/display-items/$id": {
+      "filePath": "display-items/$id.tsx"
     }
   }
 }
