@@ -2,28 +2,32 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 module.exports = (sequelize) => {
-  const Store = sequelize.define('Store', {
+  const User_Location = sequelize.define('User_Location', {
     ID: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    geom_loc: {
-      type: DataTypes.GEOMETRY('POINT'),
+    User_ID: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'User',
+        key: 'id',
+      },
     },
-    Name: {
-      type: DataTypes.STRING(50),
+    user_loc: {
+      type: DataTypes.GEOMETRY('POINT'),
       allowNull: false,
     },
   }, {
     indexes: [
       {
         type: 'SPATIAL',
-        fields: ['geom_loc'],
+        fields: ['user_loc'],
       },
     ],
   });
 
-  return Store;
+  return User_Location;
 };

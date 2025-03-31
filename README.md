@@ -1,29 +1,23 @@
 # CPSC 449 Project: Affordable Groceries
 
+As a passionate team of CSUF (California State University, Fullerton) students,
+we endeavor to provide you with the best
+deals and ensure you get the most value for your money.  
 
-install docker (have docker desktop open)
+Affordable Groceries seeks to help you find the most affordable items,
+by listing the cheapest items from different stores. We aim to make sure that you can get the best
+foods at the best prices. We want you to eat healthy without breaking the bank. We hope you enjoy your shopping experience with us!
 
-in terminal run the following:
-npm install mysql2
-docker build -t my-mysql .
-docker run --name mysql-container -p 3307:3306 -d my-mysql
-npm run start:backend 
+## Installation and Set Up
 
-Plz note that the first time you run npm run it will give an error bc of initalization. Run it again and it will work.
+Run `npm install` in both the root and `client` directories. \
+Then run `npm run dev` in the root directory.
 
-(if the above does not work plz @ me in discord, these are all the commands you should need. )
-
-
+## Instructions for starting Docker for Website 
+docker build -t my-mysql . 
+docker run --name mysql-container -p 3308:3306 -d my-mysql 
 docker exec -it mysql-container mysql -u root -p
 
-docker run --name mysql-container -p 3307:3306 -e MYSQL_ROOT_PASSWORD=root -d mysql:8 mysqld --mysql-native-password=ON
-
-
-for deleting container:
-docker stop mysql-container
-docker rm mysql-container
-
-
-
-
-
+### Instructions for Deleting Docker 
+    docker stop mysql-container 
+    docker rm mysql-container 
