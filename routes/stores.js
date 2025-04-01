@@ -5,7 +5,7 @@ const db = require('../models'); // Import the models
 const Store = db.Store;
 
 // Get all stores
-router.get('/stores', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const stores = await Store.findAll();
     res.json(stores);
@@ -16,7 +16,7 @@ router.get('/stores', async (req, res) => {
 });
 
 // Check store location
-router.get('/stores/check', async (req, res) => {
+router.get('/check', async (req, res) => {
   const { LONG, LAT } = req.query;
 
   if (!LONG || !LAT) {
@@ -26,7 +26,15 @@ router.get('/stores/check', async (req, res) => {
   try {
     const results = await Store.findAll({
       attributes: ['ID'],
-      where: db.Sequelize.where(db.Sequelize.fn('ST_Distance_Sphere', db.Sequelize.col('geom_loc'), db.Sequelize.fn('ST_Point', LONG, LAT)), '<', 750)
+      where: db.Sequelize.where(
+        db.Sequelize.fn(
+          'ST_Distance_Sphere',
+          db.Sequelize.col('geom_loc'),
+          db.Sequelize.fn('POINT', LONG, LAT)
+        ),
+        '<',
+        750
+      ),
     });
     res.json(results);
   } catch (error) {
@@ -36,7 +44,7 @@ router.get('/stores/check', async (req, res) => {
 });
 
 // Get store by ID
-router.get('/stores/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   const storeId = req.params.id;
   try {
     const store = await Store.findByPk(storeId);
@@ -51,7 +59,7 @@ router.get('/stores/:id', async (req, res) => {
 });
 
 // Add a new store
-router.post('/stores', async (req, res) => {
+router.post('/', async (req, res) => {
   const { LONG, LAT, Name } = req.body;
 
   if (!LONG || !LAT || !Name) {
@@ -59,7 +67,10 @@ router.post('/stores', async (req, res) => {
   }
 
   try {
-    const store = await Store.create({ geom_loc: db.Sequelize.fn('ST_Point', LONG, LAT), Name });
+    const store = await Store.create({
+      geom_loc: db.Sequelize.fn('ST_GeomFromText', `POINT(${parseFloat(LONG)} ${parseFloat(LAT)})`),
+      Name,
+    });    
     console.log("Store added:", store.ID);
     res.status(201).json({ id: store.ID });
   } catch (error) {
@@ -71,7 +82,7 @@ router.post('/stores', async (req, res) => {
 
 
 // Update a store
-router.put('/stores/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const storeId = req.params.id;
   const { name, lat, long } = req.body;
 
@@ -98,7 +109,7 @@ router.put('/stores/:id', async (req, res) => {
 });
 
 // Delete a store
-router.delete('/stores/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const storeId = req.params.id;
   try {
     const store = await Store.findByPk(storeId);
