@@ -15,6 +15,24 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/getname', async (req, res) => {
+  const { storeId } = req.query;
+  try {
+    const store = await Store.findByPk(storeId, {
+      attributes: ['Name'] // Only select the location attribute
+    });
+
+    if (!store) {
+      return res.status(404).json({ error: 'Store not found' });
+    }
+
+    res.json({ Name: store.Name });
+  } catch (error) {
+    console.error('Error fetching store:', error);
+    res.status(500).json({ error: 'Error fetching store' });
+  }
+});
+
 // Check store location
 router.get('/check', async (req, res) => {
   const { LONG, LAT } = req.query;
@@ -36,7 +54,8 @@ router.get('/check', async (req, res) => {
         750
       ),
     });
-    res.json(results);
+    const storeIDs = results.map(store => store.ID);
+    res.json(storeIDs);
   } catch (error) {
     console.error("Error checking location:", error);
     res.status(500).json({ error: 'Error checking location' });
@@ -47,11 +66,18 @@ router.get('/check', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const storeId = req.params.id;
   try {
-    const store = await Store.findByPk(storeId);
+    const store = await Store.findByPk(storeId, {
+      attributes: ['geom_loc'] // Only select the location attribute
+    });
+
     if (!store) {
       return res.status(404).json({ error: 'Store not found' });
     }
-    res.json(store);
+
+    // Extract latitude and longitude from the Point geometry
+    const [longitude, latitude] = store.geom_loc.coordinates;
+
+    res.json({ latitude, longitude });
   } catch (error) {
     console.error('Error fetching store:', error);
     res.status(500).json({ error: 'Error fetching store' });
@@ -101,9 +127,6 @@ router.put('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating store:', error);
     //Check for Sequelize validation errors specifically
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({ error: error.errors.map(e => e.message) });
-    }
     res.status(500).json({ error: 'Error updating store' });
   }
 });

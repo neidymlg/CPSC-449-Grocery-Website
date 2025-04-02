@@ -45,54 +45,67 @@ router.get('/display', async (req, res) => {
 
 // Check current day item
 router.get('/check_current_day', async (req, res) => {
-  const { StoreID, ProductID } = req.query;
+  const { StoreIDs, ProductID } = req.query;
 
-  if (!StoreID || !ProductID) {
+  if (!StoreIDs || !ProductID) {
+    console.error("Missing required fields:", { StoreIDs, ProductID });
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const storeIdArray = StoreIDs.split(',');
+
   try {
     const results = await Item.findAll({
-      attributes: ['ID'],
+      attributes: ['ID', 'Store_ID'],
       where: {
-        Store_ID: StoreID,
+        Store_ID: {
+          [db.Sequelize.Op.in]: storeIdArray
+        },
         Product_ID: ProductID,
-        [db.Sequelize.Op.not]: db.Sequelize.fn('CURDATE')
+        TS: { 
+          [db.Sequelize.Op.ne]: db.Sequelize.fn('CURDATE') 
+        }
       }
     });
-    const formattedItems = results.map(result => ({
-      id: result.ID
-    }));
-    res.json(formattedItems);
+    
+    res.json(results);
   } catch (error) {
     console.error("Error checking item:", error);
     res.status(500).json({ error: 'Error checking item' });
   }
 });
 
+
 // Check if a store has no items
 router.get('/check_no_items', async (req, res) => {
-  const { StoreID, ProductID } = req.query;
+  const { StoreIDs, ProductID } = req.query;
 
-  if (!StoreID || !ProductID) {
+  if (!StoreIDs || !ProductID) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
-    // Count the number of items for the given StoreID and ProductID
-    const itemCount = await Item.count({
+    const storeIdArray = StoreIDs.split(',');
+    
+    // Find stores with ANY items
+    const storesWithItems = await Item.findAll({
+      attributes: ['ID'],
       where: {
-        Store_ID: StoreID,
-        Product_ID: ProductID,
-      },
+        ID: {
+          [db.Sequelize.Op.in]: storeIdArray,
+          [db.Sequelize.Op.notIn]: db.Sequelize.literal(`(
+            SELECT Store_ID FROM Item WHERE Product_ID = ${ProductID}
+          )`)
+        }
+      }
     });
 
-    // If itemCount is 0, the store has no items
-    const hasNoItems = itemCount === 0;
-    res.json({ hasNoItems });
+    const emptyStoreIDs = storesWithItems.map(store => store.ID);
+
+    res.json({ emptyStoreIDs });
   } catch (error) {
-    console.error("Error checking if store has no items:", error);
-    res.status(500).json({ error: 'Error checking if store has no items' });
+    console.error("Error checking empty stores:", error);
+    res.status(500).json({ error: 'Error checking empty stores' });
   }
 });
 
@@ -120,7 +133,7 @@ router.put('/:id', async (req, res) => {
     }
 
     // Update the item's price and timestamp
-    await item.update({ Price, TS: db.Sequelize.fn('CURRENT_TIMESTAMP') });
+    await item.update({ Price, TS: db.Sequelize.fn('CURRENT_DATE') });
     res.json({ message: 'Item updated successfully' });
   } catch (error) {
     console.error('Error updating item:', error);

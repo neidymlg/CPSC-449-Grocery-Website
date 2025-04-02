@@ -10,7 +10,7 @@ function RouteComponent() {
   const { id: productID } = useParams({ from: "/display-items/$id" });
   const [latitude, setLatitude] = useState(parseFloat(sessionStorage.getItem("latitude") || "0"));
   const [longitude, setLongitude] = useState(parseFloat(sessionStorage.getItem("longitude") || "0"));
-
+  let nearbyStores: number[] = [];
 
   useEffect(() => {
 
@@ -19,28 +19,25 @@ function RouteComponent() {
         const response = await axios.get("/api/store/check", {
           params: { LONG: longitude, LAT: latitude },
         });
-        console.log("Checked for nearby stores", response.data)
-        alert(`Checked for nearby stores ${response.data}`);
         return response.data;
       }
       catch (error) {
-  
+        console.log("Error fetching Stores", error);
       }
     };
   
-    const checkItemsForCurrentDay = async (storeID: number) => {
-      try {
+    const checkItemsForCurrentDay = async (storeIDs: number[]) => {
+      try {    
         const response = await axios.get("/api/item/check_current_day", {
-          params: { StoreID: storeID, ProductID: productID },
+          params: { StoreIDs: storeIDs.join(','), ProductID: productID },
         });
-        console.log("Checked for items on same day", response.data)
-        return response.data; // Returns an array of items that are not updated
+        return response.data;
       } catch (error) {
         console.error("Error checking items for the current day:", error);
         throw error;
       }
     };
-  
+    
     const addNewStore = async (longitude: number, latitude: number, name: string) => {
       try {
         const response = await axios.post("/api/store", {
@@ -70,7 +67,6 @@ function RouteComponent() {
           Price: price,
         });
         console.log("Successfully read data for Item ID: ", response.data.id);
-        return response.data.id; // Returns the ID of the newly added item
       } catch (error) {
         console.error("Error adding new item:", error);
         throw error;
@@ -84,31 +80,41 @@ function RouteComponent() {
           ProductID: productID, 
           Price: price,
         });
-        console.log(`Updated item with ID: ${itemId}`);
-        return response.data;
+        console.log(`Updated item with ID: ${itemId}, Response:`, response.data);
       } catch (error) {
         console.error(`Error updating item with ID: ${itemId}`, error);
         throw error;
       }
     };
 
-    const checkItemEmpty = async (storeID : number) =>{
+    const checkEmptyStores = async (storeIDs: number[]) => {
       try {
         const response = await axios.get("/api/item/check_no_items", {
-          params: { StoreID: storeID, ProductID: productID },
+          params: { 
+            StoreIDs: storeIDs.join(','), 
+            ProductID: productID 
+          },
         });
-        console.log("Fetched items for store:", response.data);
-        return response.data; // Returns an array of items
+        return response.data.emptyStoreIDs; // Returns array of store IDs
       } catch (error) {
-        console.error("Error fetching items for store:", error);
+        console.error("Error checking empty stores:", error);
+        throw error;
+      }
+    };
+
+    const getLongLat = async (storeID: number) =>{
+      try {
+        const response = await axios.get(`/api/store/${storeID}`);
+        return response;
+      } catch (error) {
+        console.error("Error with fetching long/lat:", error);
         throw error;
       }
     }
 
     const fetchStoresAndItems = async () => {
-      alert(`Long ${longitude}, Lat: ${latitude}`);
-      const nearbyStores = await checkNearbyStores();
-
+      nearbyStores = await checkNearbyStores();
+      
       // for new stores and items
       // else for 
       if (!nearbyStores || nearbyStores.length === 0) {
@@ -122,39 +128,67 @@ function RouteComponent() {
         const storeName = "Store Name 6"
         const newStoreId = await addNewStore(storeLon, storeLat, storeName);
 
+        nearbyStores.push(newStoreId);
+
         // call API for finding items
         const itemName = "item 3";
         const itemPrice = 1;
-        const newItemID = await addNewItem(newStoreId, itemName, itemPrice);
+        await addNewItem(newStoreId, itemName, itemPrice);
+
       }
       else{
-        // Don't Add API just yet
-        console.log("Nearby stores found:", nearbyStores);
+       const outdatedItems = await checkItemsForCurrentDay(nearbyStores);
+       const emptyItems = await checkEmptyStores(nearbyStores);
         
-        const outdatedItems = await checkItemsForCurrentDay(nearbyStores.ID);
-        const emptyItems = await checkItemEmpty(nearbyStores.ID);
         if (outdatedItems.length > 0) {
-            
-            //Update Items Based on Store ID
             for (const item of outdatedItems) {
-              //call API to get new Price
-              const itemPrice = 2;
-              await updateItem(item.ID, nearbyStores.ID, itemPrice);
+              //Call API and insert items using the LONG/LAT to find the Stores
+              // const coors = await getLongLat(item.Store_ID);
+              // const LONG = coors.data.longitude;
+              // const LAT = coors.data.latitude;
+
+              const itemPrice = 5;
+              await updateItem(item.ID, item.Store_ID, itemPrice);
             }
         }
 
-        if(!emptyItems || emptyItems.length === 0){
-          //call API and add Items
-          const itemName = "new item";
-          const itemPrice = 1;
-          const newItemID = await addNewItem(nearbyStores.ID, itemName, itemPrice);
+        if(emptyItems.length > 0){
+          for (const stores of emptyItems){
+            //Call API and insert items using the LONG/LAT to find the Stores
+            // const coors = await getLongLat(stores.ID);
+            // const LONG = coors.data.longitude;
+            // const LAT = coors.data.latitude;
+            
+            const itemName = "item z";
+            const itemPrice = 1;
+            await addNewItem(stores, itemName, itemPrice);
+          }
         }
-
       }
-      alert('End');
+    };
+
+    const displayItems = async () => {
+      for (const store of nearbyStores) {
+        alert(`Stores : ${store}`);
+        try{
+          const storeName = await axios.get("/api/store/getname", {
+            params: { StoreId: store },
+          });
+          alert(`Store Name: ${storeName}`);
+
+          const display = await axios.get("/api/item/display", {
+            params: { StoreID: store, ProductID: productID }
+          });
+          alert(`Items Name: ${display.data.Name} Items Price: ${display.data.Price}`);
+        }
+        catch (error) {
+          console.log("Error fetching Stores/Items", error);
+        }
+      }
     };
 
     fetchStoresAndItems();
+    // displayItems();
   }, [latitude, longitude, productID]);
 
   
