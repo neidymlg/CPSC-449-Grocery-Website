@@ -5,7 +5,7 @@ const db = require('../models'); // Import the models
 const Item = db.Item; // Ensure the correct model name
 
 // Add a new item
-router.post('/items', async (req, res) => {
+router.post('/', async (req, res) => {
   const { StoreID, ProductID, Name, Price } = req.body;
 
   if (!StoreID || !ProductID || !Name || !Price) {
@@ -13,7 +13,7 @@ router.post('/items', async (req, res) => {
   }
 
   try {
-    const item = await Item.create({ Store_ID: StoreID, Product_ID: ProductID, Name, Price });
+    const item = await Item.create({ Store_ID: StoreID, Product_ID: ProductID, Name: Name, Price: Price });
     console.log("Store item added:", item.ID);
     res.json({ id: item.ID });
   } catch (error) {
@@ -23,7 +23,7 @@ router.post('/items', async (req, res) => {
 });
 
 // Check item
-router.get('/items/check', async (req, res) => {
+router.get('/display', async (req, res) => {
   const { StoreID, ProductID } = req.query;
 
   if (!StoreID || !ProductID) {
@@ -35,6 +35,7 @@ router.get('/items/check', async (req, res) => {
       attributes: ['Name', 'Price'],
       where: { Store_ID: StoreID, Product_ID: ProductID }
     });
+    
     res.json(results);
   } catch (error) {
     console.error("Error checking item:", error);
@@ -43,22 +44,30 @@ router.get('/items/check', async (req, res) => {
 });
 
 // Check current day item
-router.get('/items/check_current_day', async (req, res) => {
-  const { StoreID, ProductID } = req.query;
+router.get('/check_current_day', async (req, res) => {
+  const { StoreIDs, ProductID } = req.query;
 
-  if (!StoreID || !ProductID) {
+  if (!StoreIDs || !ProductID) {
+    console.error("Missing required fields:", { StoreIDs, ProductID });
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const storeIdArray = StoreIDs.split(',');
+
   try {
     const results = await Item.findAll({
-      attributes: ['Name', 'Price'],
+      attributes: ['ID', 'Store_ID'],
       where: {
-        Store_ID: StoreID,
+        Store_ID: {
+          [db.Sequelize.Op.in]: storeIdArray
+        },
         Product_ID: ProductID,
-        [db.Sequelize.Op.not]: db.Sequelize.fn('CURDATE')
+        TS: { 
+          [db.Sequelize.Op.ne]: db.Sequelize.fn('CURDATE') 
+        }
       }
     });
+    
     res.json(results);
   } catch (error) {
     console.error("Error checking item:", error);
@@ -66,8 +75,42 @@ router.get('/items/check_current_day', async (req, res) => {
   }
 });
 
+
+// Check if a store has no items
+router.get('/check_no_items', async (req, res) => {
+  const { StoreIDs, ProductID } = req.query;
+
+  if (!StoreIDs || !ProductID) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const storeIdArray = StoreIDs.split(',');
+    
+    // Find stores with ANY items
+    const storesWithItems = await Item.findAll({
+      attributes: ['ID'],
+      where: {
+        ID: {
+          [db.Sequelize.Op.in]: storeIdArray,
+          [db.Sequelize.Op.notIn]: db.Sequelize.literal(`(
+            SELECT Store_ID FROM Item WHERE Product_ID = ${ProductID}
+          )`)
+        }
+      }
+    });
+
+    const emptyStoreIDs = storesWithItems.map(store => store.ID);
+
+    res.json({ emptyStoreIDs });
+  } catch (error) {
+    console.error("Error checking empty stores:", error);
+    res.status(500).json({ error: 'Error checking empty stores' });
+  }
+});
+
 // Update item price
-router.put('/items/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   const itemId = req.params.id;
   const { StoreID, ProductID, Price } = req.body;
 
@@ -76,11 +119,21 @@ router.put('/items/:id', async (req, res) => {
   }
 
   try {
-    const item = await Item.findByPk(itemId);
+    // Find the item by ID, StoreID, and ProductID
+    const item = await Item.findOne({
+      where: {
+        ID: itemId,
+        Store_ID: StoreID,
+        Product_ID: ProductID,
+      },
+    });
+
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
     }
-    await item.update({ Price, TS: db.Sequelize.fn('CURRENT_TIMESTAMP') });
+
+    // Update the item's price and timestamp
+    await item.update({ Price, TS: db.Sequelize.fn('CURRENT_DATE') });
     res.json({ message: 'Item updated successfully' });
   } catch (error) {
     console.error('Error updating item:', error);

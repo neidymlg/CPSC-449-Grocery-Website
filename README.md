@@ -19,5 +19,5 @@ docker run --name mysql-container -p 3308:3306 -d my-mysql
 docker exec -it mysql-container mysql -u root -p
 
 ### Instructions for Deleting Docker 
-    docker stop mysql-container 
-    docker rm mysql-container 
+docker stop mysql-container     
+docker rm mysql-container 

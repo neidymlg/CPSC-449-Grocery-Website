@@ -9,8 +9,12 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: "mysql",
+    define: {
+      freezeTableName: true, // Disable pluralization globally
+    },
     logging: console.log, // Set to false to disable logging
-  }
+  }, 
+
 );
 
 module.exports = sequelize;

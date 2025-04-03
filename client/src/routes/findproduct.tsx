@@ -34,7 +34,6 @@ function RouteComponent() {
           "Using stored location:",
           `Latitude: ${storedLatitude}, Longitude: ${storedLongitude}`
         );
-        alert(`Stored Latitude: ${storedLatitude}, Longitude: ${storedLongitude}`);
       }
       else{
         if (navigator.geolocation) {
@@ -43,7 +42,6 @@ function RouteComponent() {
               const lat = position.coords.latitude;
               const lon = position.coords.longitude;
               console.log("Latitude:", lat, "Longitude:", lon);
-              alert(`Your location: Latitude ${lat}, Longitude ${lon}`);
 
               setLatitude(storedLatitude); // Update state
               setLongitude(storedLongitude); // Update state      
