@@ -32,7 +32,6 @@ router.get('/display', async (req, res) => {
 
   try {
     const results = await Item.findAll({
-      attributes: ['Name', 'Price'],
       where: { Store_ID: StoreID, Product_ID: ProductID }
     });
     
@@ -89,19 +88,35 @@ router.get('/check_no_items', async (req, res) => {
     
     // Find stores with ANY items
     const storesWithItems = await Item.findAll({
-      attributes: ['ID'],
+      attributes: ['Store_ID'], // Select only Store_ID
       where: {
-        ID: {
-          [db.Sequelize.Op.in]: storeIdArray,
-          [db.Sequelize.Op.notIn]: db.Sequelize.literal(`(
-            SELECT Store_ID FROM Item WHERE Product_ID = ${ProductID}
-          )`)
-        }
-      }
+        Store_ID: {
+          [db.Sequelize.Op.in]: storeIdArray, // Filter by StoreIDs array
+        },
+        Product_ID: ProductID, // Match the given ProductID
+      },
+      group: ['Store_ID'], // Group by Store_ID
+      having: db.Sequelize.literal('COUNT(*) > 0'), // Only include stores with items
     });
 
-    const emptyStoreIDs = storesWithItems.map(store => store.ID);
+    // Extract Store_IDs from the result
+    const storesWithItemsIds = storesWithItems.map(store => store.Store_ID);
 
+
+    const emptyStores = await Item.findAll({
+      attributes: ['Store_ID'], // Select only Store_ID
+      where: {
+        Store_ID: {
+          [db.Sequelize.Op.in]: storeIdArray, // Filter by StoreIDs array
+          [db.Sequelize.Op.notIn]: storesWithItemsIds, // Exclude stores with items
+        },
+      },
+      group: ['Store_ID'], // Group by Store_ID
+    });
+
+    // Extract Store_IDs from the result
+    const emptyStoreIDs = emptyStores.map(store => store.Store_ID);
+    
     res.json({ emptyStoreIDs });
   } catch (error) {
     console.error("Error checking empty stores:", error);

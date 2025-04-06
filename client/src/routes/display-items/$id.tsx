@@ -1,5 +1,5 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
-import React, { useEffect, useState } from "react";
+import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 export const Route = createFileRoute("/display-items/$id")({
@@ -8,16 +8,23 @@ export const Route = createFileRoute("/display-items/$id")({
 
 function RouteComponent() {
   const { id: productID } = useParams({ from: "/display-items/$id" });
-  const [latitude, setLatitude] = useState(parseFloat(sessionStorage.getItem("latitude") || "0"));
-  const [longitude, setLongitude] = useState(parseFloat(sessionStorage.getItem("longitude") || "0"));
-  let nearbyStores: number[] = [];
+  const latitudeRef = useRef(parseFloat(sessionStorage.getItem("latitude") || "0"));
+  const longitudeRef = useRef(parseFloat(sessionStorage.getItem("longitude") || "0"));
+  const cachedDataRef = useRef<{
+    storeName: string;
+    items: { Name: string; Price: number; Store_ID: number; Product_ID: number; Item_ID: number }[];
+  }[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
 
   useEffect(() => {
+    const cacheKey = `cachedData_${productID}`;
 
     const checkNearbyStores = async () => {    
       try{
         const response = await axios.get("/api/store/check", {
-          params: { LONG: longitude, LAT: latitude },
+          params: { LONG: longitudeRef.current, LAT: latitudeRef.current },
         });
         return response.data;
       }
@@ -113,7 +120,7 @@ function RouteComponent() {
     }
 
     const fetchStoresAndItems = async () => {
-      nearbyStores = await checkNearbyStores();
+      let nearbyStores = await checkNearbyStores();
       
       // for new stores and items
       // else for 
@@ -123,17 +130,20 @@ function RouteComponent() {
         // these are fake values, change them to all store lat/long/name
 
         // (add a for loop to add all these stores/items)
+
         const storeLat = 33.7572;
         const storeLon = -117.9111;
         const storeName = "Store Name 6"
         const newStoreId = await addNewStore(storeLon, storeLat, storeName);
 
-        nearbyStores.push(newStoreId);
+        nearbyStores = [newStoreId];
 
         // call API for finding items
         const itemName = "item 3";
         const itemPrice = 1;
         await addNewItem(newStoreId, itemName, itemPrice);
+
+        return nearbyStores;
 
       }
       else{
@@ -164,38 +174,94 @@ function RouteComponent() {
             await addNewItem(stores, itemName, itemPrice);
           }
         }
+
+        return nearbyStores;
       }
     };
 
-    const displayItems = async () => {
+    const displayItems = async (nearbyStores: number[]) => {
+      const results = [];
       for (const store of nearbyStores) {
-        alert(`Stores : ${store}`);
         try{
           const storeName = await axios.get("/api/store/getname", {
-            params: { StoreId: store },
+            params: { storeId: store },
           });
-          alert(`Store Name: ${storeName}`);
 
-          const display = await axios.get("/api/item/display", {
+          const item = await axios.get("/api/item/display", {
             params: { StoreID: store, ProductID: productID }
           });
-          alert(`Items Name: ${display.data.Name} Items Price: ${display.data.Price}`);
+
+          // alert("Item ID: " + item.data[0].ID);
+          // alert("Store ID: " + item.data[0].Store_ID);
+          results.push({
+            storeName: storeName.data.Name,
+            items: item.data.map((item: { Name: string; Price: number, Store_ID: number, Product_ID: number, Item_ID: number }) => ({
+              Name: item.Name,
+              Price: item.Price,
+              Store_ID: item.Store_ID,
+              Product_ID: item.Product_ID,
+              Item_ID: item.ID,
+            }))
+          });
+
         }
         catch (error) {
           console.log("Error fetching Stores/Items", error);
         }
       }
+
+      return results;
     };
 
-    fetchStoresAndItems();
-    // displayItems();
-  }, [latitude, longitude, productID]);
+    const fetchAndDisplay = async () => {
+      setLoading(true);
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        cachedDataRef.current = JSON.parse(cached); 
+        setLoading(false);
+        return;
+      }
 
-  
+      const nearbyStores = await fetchStoresAndItems();
+      const results = await displayItems(nearbyStores);
+      sessionStorage.setItem(cacheKey, JSON.stringify(results));
+      cachedDataRef.current = results; 
+      setLoading(false); 
+    };
+
+    fetchAndDisplay();
+  }, [productID]);
   return (
     <div className="container mx-auto px-4 py-6">
-      <h1 className="text-3xl font-bold">Product Details</h1>
-      <p>Product ID: {productID}</p>
+      {cachedDataRef.current ? (
+        <div className="mt-4 space-y-4">
+          {cachedDataRef.current.map((store, i) => (
+            <div key={i} className="bg-white p-4 rounded-lg shadow">
+              <h2 className="text-xl font-semibold">{store.storeName}</h2>
+              <div className="mt-2 space-y-2">
+                {store.items.map((item, j) => (
+                  <div key={j} className="flex justify-between py-2 border-b">
+                    <span>{item.Name}</span>
+                    <span className="font-medium">${item.Price}</span>
+                    <button
+                      onClick={() =>
+                        navigate({
+                          to: `/create-order/${item.Item_ID}/${item.Store_ID}/${item.Product_ID}`,
+                        })
+                      }
+                      className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
+                    >
+                      +
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 text-gray-500">Loading product data...</div>
+      )}
     </div>
   );
 }

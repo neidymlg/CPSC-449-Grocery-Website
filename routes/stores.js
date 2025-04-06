@@ -25,7 +25,6 @@ router.get('/getname', async (req, res) => {
     if (!store) {
       return res.status(404).json({ error: 'Store not found' });
     }
-
     res.json({ Name: store.Name });
   } catch (error) {
     console.error('Error fetching store:', error);

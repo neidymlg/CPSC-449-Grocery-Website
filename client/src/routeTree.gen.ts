@@ -17,6 +17,7 @@ import { Route as CreateAccountImport } from './routes/create-account'
 import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
 import { Route as DisplayItemsIdImport } from './routes/display-items/$id'
+import { Route as CreateOrderItemIDStoreIDProductIDImport } from './routes/create-order/$Item_ID/$Store_ID/$Product_ID'
 
 // Create/Update Routes
 
@@ -55,6 +56,13 @@ const DisplayItemsIdRoute = DisplayItemsIdImport.update({
   path: '/display-items/$id',
   getParentRoute: () => rootRoute,
 } as any)
+
+const CreateOrderItemIDStoreIDProductIDRoute =
+  CreateOrderItemIDStoreIDProductIDImport.update({
+    id: '/create-order/$Item_ID/$Store_ID/$Product_ID',
+    path: '/create-order/$Item_ID/$Store_ID/$Product_ID',
+    getParentRoute: () => rootRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -102,6 +110,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisplayItemsIdImport
       parentRoute: typeof rootRoute
     }
+    '/create-order/$Item_ID/$Store_ID/$Product_ID': {
+      id: '/create-order/$Item_ID/$Store_ID/$Product_ID'
+      path: '/create-order/$Item_ID/$Store_ID/$Product_ID'
+      fullPath: '/create-order/$Item_ID/$Store_ID/$Product_ID'
+      preLoaderRoute: typeof CreateOrderItemIDStoreIDProductIDImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -114,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
+  '/create-order/$Item_ID/$Store_ID/$Product_ID': typeof CreateOrderItemIDStoreIDProductIDRoute
 }
 
 export interface FileRoutesByTo {
@@ -123,6 +139,7 @@ export interface FileRoutesByTo {
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
+  '/create-order/$Item_ID/$Store_ID/$Product_ID': typeof CreateOrderItemIDStoreIDProductIDRoute
 }
 
 export interface FileRoutesById {
@@ -133,6 +150,7 @@ export interface FileRoutesById {
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
+  '/create-order/$Item_ID/$Store_ID/$Product_ID': typeof CreateOrderItemIDStoreIDProductIDRoute
 }
 
 export interface FileRouteTypes {
@@ -144,6 +162,7 @@ export interface FileRouteTypes {
     | '/findproduct'
     | '/login'
     | '/display-items/$id'
+    | '/create-order/$Item_ID/$Store_ID/$Product_ID'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -152,6 +171,7 @@ export interface FileRouteTypes {
     | '/findproduct'
     | '/login'
     | '/display-items/$id'
+    | '/create-order/$Item_ID/$Store_ID/$Product_ID'
   id:
     | '__root__'
     | '/'
@@ -160,6 +180,7 @@ export interface FileRouteTypes {
     | '/findproduct'
     | '/login'
     | '/display-items/$id'
+    | '/create-order/$Item_ID/$Store_ID/$Product_ID'
   fileRoutesById: FileRoutesById
 }
 
@@ -170,6 +191,7 @@ export interface RootRouteChildren {
   FindproductRoute: typeof FindproductRoute
   LoginRoute: typeof LoginRoute
   DisplayItemsIdRoute: typeof DisplayItemsIdRoute
+  CreateOrderItemIDStoreIDProductIDRoute: typeof CreateOrderItemIDStoreIDProductIDRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -179,6 +201,8 @@ const rootRouteChildren: RootRouteChildren = {
   FindproductRoute: FindproductRoute,
   LoginRoute: LoginRoute,
   DisplayItemsIdRoute: DisplayItemsIdRoute,
+  CreateOrderItemIDStoreIDProductIDRoute:
+    CreateOrderItemIDStoreIDProductIDRoute,
 }
 
 export const routeTree = rootRoute
@@ -196,7 +220,8 @@ export const routeTree = rootRoute
         "/create-account",
         "/findproduct",
         "/login",
-        "/display-items/$id"
+        "/display-items/$id",
+        "/create-order/$Item_ID/$Store_ID/$Product_ID"
       ]
     },
     "/": {
@@ -216,6 +241,9 @@ export const routeTree = rootRoute
     },
     "/display-items/$id": {
       "filePath": "display-items/$id.tsx"
+    },
+    "/create-order/$Item_ID/$Store_ID/$Product_ID": {
+      "filePath": "create-order/$Item_ID/$Store_ID/$Product_ID.tsx"
     }
   }
 }

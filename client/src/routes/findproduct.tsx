@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 export const Route = createFileRoute("/findproduct")({
@@ -9,66 +9,75 @@ export const Route = createFileRoute("/findproduct")({
 function RouteComponent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<{ id: number, name: string }[]>([]);
-  const [latitude, setLatitude] = useState<string | null>(null);
-  const [longitude, setLongitude] = useState<string | null>(null);
+  const latitudeRef = useRef<string | null>(null); 
+  const longitudeRef = useRef<string | null>(null);
+  const LocationRef = useRef(false); 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Fetch products from the database
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get("/api/products");
-        console.log("Fetched products:", response.data); // Debugging log
-        setProducts(response.data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-
-    const fetchLatLong = async () => {
-      const storedLatitude = sessionStorage.getItem("latitude");
-      const storedLongitude = sessionStorage.getItem("longitude");
-    
-      if (storedLatitude && storedLongitude) {
-        console.log(
-          "Using stored location:",
-          `Latitude: ${storedLatitude}, Longitude: ${storedLongitude}`
-        );
-      }
-      else{
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const lat = position.coords.latitude;
-              const lon = position.coords.longitude;
-              console.log("Latitude:", lat, "Longitude:", lon);
-
-              setLatitude(storedLatitude); // Update state
-              setLongitude(storedLongitude); // Update state      
-              sessionStorage.setItem("latitude", lat.toString()); // Store in sessionStorage
-              sessionStorage.setItem("longitude", lon.toString()); // Store in sessionStorage
-             },
-            (error) => {
-              console.error("Error getting location:", error.message);
-              alert("Unable to retrieve your location.");
-            }
-          );
-        } else {
-          console.error("Geolocation is not supported by this browser.");
-          alert("Geolocation is not supported by your browser.");
-        }
-      }
-    };
-
-    fetchProducts();
-    fetchLatLong();
-  }, []);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+useEffect(() => {
+  const initialize = async () => {
+    // Fetch location and products
+    await fetchInitialData();
+    LocationRef.current = true; // Mark initialization as complete
   };
 
+  const fetchInitialData = async () => {
+  
+    // Fetch products
+    try {
+      const response = await axios.get("/api/products");
+      console.log("Fetched products:", response.data);
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  
+    // Fetch location
+    if (!latitudeRef.current || !longitudeRef.current) {
+      const storedLatitude = sessionStorage.getItem("latitude");
+      const storedLongitude = sessionStorage.getItem("longitude");
+  
+      if (storedLatitude && storedLongitude) {
+        latitudeRef.current = storedLatitude;
+        longitudeRef.current = storedLongitude;
+        console.log("Using stored location:", storedLatitude, storedLongitude);
+      } else {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(resolve, reject);
+            } else {
+              reject(new Error("Geolocation is not supported by this browser."));
+            }
+          });
+  
+          const lat = position.coords.latitude.toString();
+          const lon = position.coords.longitude.toString();
+  
+          sessionStorage.setItem("latitude", lat);
+          sessionStorage.setItem("longitude", lon);
+  
+          latitudeRef.current = lat;
+          longitudeRef.current = lon;
+  
+          console.log("New location fetched:", lat, lon);
+        } catch (error) {
+          console.error("Error fetching location:", error);
+          alert("Unable to retrieve your location.");
+        }
+      }
+    }
+
+  };
+  
+    initialize();
+  }, []);
+  
   const handleAddProduct = async () => {
+    if (!LocationRef.current) {
+      return;
+    }
+  
     if (searchTerm.trim() !== "") {
       try {
         const exProduct = products.find(
@@ -78,8 +87,8 @@ function RouteComponent() {
         if (exProduct) {
           console.log("Product already exists:", exProduct);
           navigate({
-            to: "/display-items/$id", // No dynamic parameters in the path
-            params: { id: exProduct.id.toString() }, // Pass query parameters
+            to: "/display-items/$id",
+            params: { id: exProduct.id.toString() },
           });
         } else {
           const response = await axios.post("/api/products", {
@@ -89,8 +98,7 @@ function RouteComponent() {
           setProducts([...products, response.data]);
           setSearchTerm("");
           navigate({
-            to: "/display-items/$id", // No dynamic parameters in the path
-            params: { id: response.data.id}, // Pass query parameters
+            to: `/display-items/${response.data.id}`
           });
         }
       } catch (error) {
@@ -99,6 +107,9 @@ function RouteComponent() {
     }
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
   
   return (
     <div>
