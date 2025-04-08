@@ -44,6 +44,18 @@ const Layout = () => (
                 Search Products
               </Link>
             </li>
+            <li>
+              <Link
+                to="/show-user-orders"
+                className="hover:bg-gray-100 hover:text-gray-900 text-gray-700 border border-transparent hover:border-gray-300 transition-colors duration-200 px-7 py-4 rounded-md"
+                activeProps={{
+                  className:
+                    "font-bold text-gray-900 border border-gray-300 bg-gray-100",
+                }}
+              >
+                My Orders
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>

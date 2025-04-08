@@ -49,5 +49,10 @@ module.exports = (sequelize) => {
     timestamps: false,
   });
 
+  Item.associate = (models) => {
+    Item.belongsTo(models.Store, { foreignKey: 'Store_ID' }); // Associate with Store
+    Item.hasMany(models.User_Order, { foreignKey: 'Item_ID' }); // Associate with User_Order
+  };
+  
   return Item;
 };

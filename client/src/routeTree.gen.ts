@@ -11,14 +11,22 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as ShowUserOrdersImport } from './routes/show-user-orders'
 import { Route as LoginImport } from './routes/login'
 import { Route as FindproductImport } from './routes/findproduct'
+import { Route as CreateOrderImport } from './routes/create-order'
 import { Route as CreateAccountImport } from './routes/create-account'
 import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
 import { Route as DisplayItemsIdImport } from './routes/display-items/$id'
 
 // Create/Update Routes
+
+const ShowUserOrdersRoute = ShowUserOrdersImport.update({
+  id: '/show-user-orders',
+  path: '/show-user-orders',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LoginRoute = LoginImport.update({
   id: '/login',
@@ -29,6 +37,12 @@ const LoginRoute = LoginImport.update({
 const FindproductRoute = FindproductImport.update({
   id: '/findproduct',
   path: '/findproduct',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const CreateOrderRoute = CreateOrderImport.update({
+  id: '/create-order',
+  path: '/create-order',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -81,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateAccountImport
       parentRoute: typeof rootRoute
     }
+    '/create-order': {
+      id: '/create-order'
+      path: '/create-order'
+      fullPath: '/create-order'
+      preLoaderRoute: typeof CreateOrderImport
+      parentRoute: typeof rootRoute
+    }
     '/findproduct': {
       id: '/findproduct'
       path: '/findproduct'
@@ -93,6 +114,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/show-user-orders': {
+      id: '/show-user-orders'
+      path: '/show-user-orders'
+      fullPath: '/show-user-orders'
+      preLoaderRoute: typeof ShowUserOrdersImport
       parentRoute: typeof rootRoute
     }
     '/display-items/$id': {
@@ -111,8 +139,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
+  '/create-order': typeof CreateOrderRoute
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
+  '/show-user-orders': typeof ShowUserOrdersRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
 }
 
@@ -120,8 +150,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
+  '/create-order': typeof CreateOrderRoute
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
+  '/show-user-orders': typeof ShowUserOrdersRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
 }
 
@@ -130,8 +162,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
+  '/create-order': typeof CreateOrderRoute
   '/findproduct': typeof FindproductRoute
   '/login': typeof LoginRoute
+  '/show-user-orders': typeof ShowUserOrdersRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
 }
 
@@ -141,24 +175,30 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/create-account'
+    | '/create-order'
     | '/findproduct'
     | '/login'
+    | '/show-user-orders'
     | '/display-items/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/create-account'
+    | '/create-order'
     | '/findproduct'
     | '/login'
+    | '/show-user-orders'
     | '/display-items/$id'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/create-account'
+    | '/create-order'
     | '/findproduct'
     | '/login'
+    | '/show-user-orders'
     | '/display-items/$id'
   fileRoutesById: FileRoutesById
 }
@@ -167,8 +207,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CreateAccountRoute: typeof CreateAccountRoute
+  CreateOrderRoute: typeof CreateOrderRoute
   FindproductRoute: typeof FindproductRoute
   LoginRoute: typeof LoginRoute
+  ShowUserOrdersRoute: typeof ShowUserOrdersRoute
   DisplayItemsIdRoute: typeof DisplayItemsIdRoute
 }
 
@@ -176,8 +218,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CreateAccountRoute: CreateAccountRoute,
+  CreateOrderRoute: CreateOrderRoute,
   FindproductRoute: FindproductRoute,
   LoginRoute: LoginRoute,
+  ShowUserOrdersRoute: ShowUserOrdersRoute,
   DisplayItemsIdRoute: DisplayItemsIdRoute,
 }
 
@@ -194,8 +238,10 @@ export const routeTree = rootRoute
         "/",
         "/about",
         "/create-account",
+        "/create-order",
         "/findproduct",
         "/login",
+        "/show-user-orders",
         "/display-items/$id"
       ]
     },
@@ -208,11 +254,17 @@ export const routeTree = rootRoute
     "/create-account": {
       "filePath": "create-account.tsx"
     },
+    "/create-order": {
+      "filePath": "create-order.tsx"
+    },
     "/findproduct": {
       "filePath": "findproduct.tsx"
     },
     "/login": {
       "filePath": "login.tsx"
+    },
+    "/show-user-orders": {
+      "filePath": "show-user-orders.tsx"
     },
     "/display-items/$id": {
       "filePath": "display-items/$id.tsx"
