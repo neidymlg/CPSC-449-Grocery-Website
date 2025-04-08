@@ -12,7 +12,7 @@ function RouteComponent() {
   const longitudeRef = useRef(parseFloat(sessionStorage.getItem("longitude") || "0"));
   const cachedDataRef = useRef<{
     storeName: string;
-    items: { Name: string; Price: number; Store_ID: number; Product_ID: number; Item_ID: number }[];
+    items: { Name: string; Price: number; Store_ID: number; Product_ID: number; Item_ID: number; ID: number }[];
   }[] | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -195,7 +195,7 @@ function RouteComponent() {
           // alert("Store ID: " + item.data[0].Store_ID);
           results.push({
             storeName: storeName.data.Name,
-            items: item.data.map((item: { Name: string; Price: number, Store_ID: number, Product_ID: number, Item_ID: number }) => ({
+            items: item.data.map((item: { Name: string; Price: number, Store_ID: number, Product_ID: number, Item_ID: number, ID: number }) => ({
               Name: item.Name,
               Price: item.Price,
               Store_ID: item.Store_ID,
@@ -244,11 +244,16 @@ function RouteComponent() {
                     <span>{item.Name}</span>
                     <span className="font-medium">${item.Price}</span>
                     <button
-                      onClick={() =>
-                        navigate({
-                          to: `/create-order/${item.Item_ID}/${item.Store_ID}/${item.Product_ID}`,
-                        })
-                      }
+                      onClick={() => {
+                        if (item) {
+                          navigate({
+                            to: "/create-order", // Navigate to the create-order route
+                            state: {...item, storeName: store.storeName, quantity: 1, totalPrice: item.Price} // Pass the item object as state
+                          });
+                        } else {
+                          alert('Item data is missing!');
+                        }
+                      }}
                       className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
                     >
                       +

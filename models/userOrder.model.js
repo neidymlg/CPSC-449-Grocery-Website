@@ -35,14 +35,26 @@ module.exports = (sequelize) => {
       allowNull: false,
       primaryKey: true,
       references: {
-        model: 'Order', // Ensure the table name matches your database
+        model: 'Orders',
         key: 'ID',
       },
     },
+    Quantity: {
+      type: DataTypes.INTEGER,
+      allowNull: false, // Ensure this field is required
+    },
+    Individual_Total: {
+      type: DataTypes.DECIMAL(6, 2),
+      allowNull: false, // Ensure this field is required
+    },
   }, {
-    tableName: 'User_Order',
-    timestamps: false,
+    tableName: 'User_Order', // Ensure the table name matches your database
+    timestamps: false, // Disable timestamps if not needed
   });
 
+  User_Order.associate = (models) => {
+    User_Order.belongsTo(models.Item, { foreignKey: 'Item_ID' }); // Associate with Item  };
+  };
+  
   return User_Order;
 };
