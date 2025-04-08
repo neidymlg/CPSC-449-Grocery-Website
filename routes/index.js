@@ -10,7 +10,7 @@ const orderRoutes = require('./orders'); // Import order routes
 router.use('/api/products', productRoutes);
 router.use('/api/store', storeRoutes);
 router.use('/api/item', itemRoutes);
-//router.use('/user', userRoutes);
+router.use('/api/user', userRoutes);
 router.use('/api/user_order', userOrderRoutes);
 router.use('/api/orders', orderRoutes);
 
