@@ -43,6 +43,7 @@ function RouteComponent() {
   // Add the current item to the cache
   const handleAddItemToCache = () => {
     const existingItemIndex = cachedItems.findIndex(  
+      //checks if items are already existing
       (cachedItem) =>
         cachedItem.Item_ID === item.Item_ID &&
         cachedItem.Store_ID === item.Store_ID &&
@@ -54,14 +55,16 @@ function RouteComponent() {
     if (existingItemIndex !== -1) {
       // If the item already exists, update its quantity and totalPrice
       updatedItems = [...cachedItems];
-      const existingItem = { ...updatedItems[existingItemIndex] }; // Create a shallow copy of the existing item
+      const existingItem = { ...updatedItems[existingItemIndex] }; // Create a shallow copy of the existing item, so as not to affect the original price
       existingItem.quantity += 1;
       existingItem.totalPrice = parseFloat((existingItem.quantity * existingItem.Price).toFixed(2));
       updatedItems[existingItemIndex] = existingItem; 
    } else {
+    //else just add the item, as there are no duplicates
       updatedItems = [...cachedItems, item];
    }
 
+   //update the Session Storage
     sessionStorage.setItem('orderItems', JSON.stringify(updatedItems));
     setCachedItems(updatedItems as CachedItem[]);
   };
@@ -72,7 +75,7 @@ function RouteComponent() {
     const removedItem = items[index];
   
     if (removedItem.quantity > 1) {
-      // Decrease quantity and update totalPrice if quantity > 1
+      // Decrease quantity by 1 and changes it to the correct price
       removedItem.quantity -= 1;
       removedItem.totalPrice = parseFloat((removedItem.quantity * removedItem.Price).toFixed(2));
     } else {
@@ -93,8 +96,10 @@ function RouteComponent() {
   // Create the order and clear the cache
   const handleCreateOrder = async () => {
     try {
+
+      //if their is no items, user is not logged in,  or there is no name, the user cannot create the order
       if (cachedItems.length === 0) {
-        alert('No items in the order!');
+        alert('No items in the order.');
         return;
       }
 
@@ -104,7 +109,7 @@ function RouteComponent() {
       }
 
       if (!customName) {
-        alert('Please provide a name for the order!');
+        alert('Please provide a name for the order.');
         return;
       }
 
@@ -123,9 +128,11 @@ function RouteComponent() {
 
       console.log("Order items added successfully:", userOrder.data.message);
 
+      //deletes all items from the cache
       sessionStorage.removeItem('orderItems');
       setCachedItems([]);
 
+      //navigates to the page
       navigate({
         to: "/findproduct",
       });

@@ -7,20 +7,74 @@ export const Route = createFileRoute("/display-items/$id")({
   });
 
 function RouteComponent() {
+  //gets productID from findproduct.tsx, this will show up in the url
   const { id: productID } = useParams({ from: "/display-items/$id" });
-  const latitudeRef = useRef(parseFloat(sessionStorage.getItem("latitude") || "0"));
-  const longitudeRef = useRef(parseFloat(sessionStorage.getItem("longitude") || "0"));
+
+  //for storing lat/long per rerender (so it does not have to go to sessionStorage everytime )
+  const latitudeRef = useRef<string | null>(null); 
+  const longitudeRef = useRef<string | null>(null);
+
+  //storing information for rerender
   const cachedDataRef = useRef<{
     storeName: string;
     items: { Name: string; Price: number; Store_ID: number; Product_ID: number; Item_ID: number; ID: number }[];
   }[] | null>(null);
+
+  // used to ensure the async function/cached items loads
   const [loading, setLoading] = useState(true);
+
+  // for navigating to next page
   const navigate = useNavigate();
   
 
   useEffect(() => {
-    const cacheKey = `cachedData_${productID}`;
 
+    //fetches user's lat/long
+    const fetchLocation = async () => { 
+      // if location is already stored, will skip
+      if (!latitudeRef.current || !longitudeRef.current) {
+
+        //if: gets lat/long from sessionStroage to store in Ref (Ref is faster/efficient that SessionStorage)
+        //else: store in sessionStorage
+        const storedLatitude = sessionStorage.getItem("latitude");
+        const storedLongitude = sessionStorage.getItem("longitude");
+    
+        if (storedLatitude && storedLongitude) {
+          latitudeRef.current = storedLatitude;
+          longitudeRef.current = storedLongitude;
+          console.log("Using stored location:", storedLatitude, storedLongitude);
+        } else {
+          //get geolocation of user
+          try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+              } else {
+                reject(new Error("Geolocation is not supported by this browser."));
+              }
+            });
+    
+            const lat = position.coords.latitude.toString();
+            const lon = position.coords.longitude.toString();
+    
+            //set the values into the sessionStorage, so  if user reloads session, it will not need to ask again
+            sessionStorage.setItem("latitude", lat);
+            sessionStorage.setItem("longitude", lon);
+    
+            //sets the values into Reference to avoid redoing function if rerendering 
+            latitudeRef.current = lat;
+            longitudeRef.current = lon;
+    
+            console.log("New location fetched:", lat, lon);
+          } catch (error) {
+            console.error("Error fetching location:", error);
+            alert("Unable to retrieve your location.");
+          }
+        }
+      }
+    };
+
+    //checks if we have stored any nearby stores, passes the storeID
     const checkNearbyStores = async () => {    
       try{
         const response = await axios.get("/api/store/check", {
@@ -33,6 +87,7 @@ function RouteComponent() {
       }
     };
   
+    //checks if items have not updated recently, returns all item information
     const checkItemsForCurrentDay = async (storeIDs: number[]) => {
       try {    
         const response = await axios.get("/api/item/check_current_day", {
@@ -45,9 +100,11 @@ function RouteComponent() {
       }
     };
     
-    const addNewStore = async (longitude: number, latitude: number, name: string) => {
+    //adds new store, returns id of all stores
+    const addNewStore = async (storeID: number, longitude: number, latitude: number, name: string) => {
       try {
         const response = await axios.post("/api/store", {
+          storeID: storeID,
           LONG: longitude,
           LAT: latitude,
           Name: name,
@@ -59,7 +116,8 @@ function RouteComponent() {
         throw error;
       }
     };
-  
+
+    //adds new item into empty store
     const addNewItem = async (
       storeId: number,
       name: string,
@@ -80,9 +138,11 @@ function RouteComponent() {
       }
     };
 
+    //updates item's price
     const updateItem = async (itemId: number, storeId: number, price: number) => {
       try {
-        const response = await axios.put(`/api/item/${itemId}`, {
+        const response = await axios.put(`/api/item`, {
+          ID: itemId,
           StoreID: storeId,
           ProductID: productID, 
           Price: price,
@@ -94,6 +154,7 @@ function RouteComponent() {
       }
     };
 
+    //checks if store doesn't have items, returns storeIDS
     const checkEmptyStores = async (storeIDs: number[]) => {
       try {
         const response = await axios.get("/api/item/check_no_items", {
@@ -109,55 +170,53 @@ function RouteComponent() {
       }
     };
 
-    const getLongLat = async (storeID: number) =>{
-      try {
-        const response = await axios.get(`/api/store/${storeID}`);
-        return response;
-      } catch (error) {
-        console.error("Error with fetching long/lat:", error);
-        throw error;
-      }
-    }
+    //DELETE ???????
+    // const getLongLat = async (storeID: number) =>{
+    //   try {
+    //     const response = await axios.get(`/api/store/${storeID}`);
+    //     return response;
+    //   } catch (error) {
+    //     console.error("Error with fetching long/lat:", error);
+    //     throw error;
+    //   }
+    // }
 
     const fetchStoresAndItems = async () => {
       let nearbyStores = await checkNearbyStores();
       
-      // for new stores and items
-      // else for 
+      // if: for new stores and items
+      // else: for nearby stores
       if (!nearbyStores || nearbyStores.length === 0) {
         // ADD API to this section !!!!!
-        // Call API for finding stores Near latitude, longitude
-        // these are fake values, change them to all store lat/long/name
 
-        // (add a for loop to add all these stores/items)
-
+        const storeID = 1;
         const storeLat = 33.7572;
         const storeLon = -117.9111;
-        const storeName = "Store Name 6"
-        const newStoreId = await addNewStore(storeLon, storeLat, storeName);
+        const storeName = "Store Name 6";
+        await addNewStore(storeID, storeLon, storeLat, storeName);
 
-        nearbyStores = [newStoreId];
+        nearbyStores.push(storeID); // Add the new store ID to nearbyStores
 
         // call API for finding items
         const itemName = "item 3";
         const itemPrice = 1;
-        await addNewItem(newStoreId, itemName, itemPrice);
+        await addNewItem(storeID, itemName, itemPrice);
 
         return nearbyStores;
 
       }
       else{
+       //checks if any items are out of date, returns item information
        const outdatedItems = await checkItemsForCurrentDay(nearbyStores);
+       //checks if any store is empty, returns store information
        const emptyItems = await checkEmptyStores(nearbyStores);
         
+       //if outdated, use a for loop to update
         if (outdatedItems.length > 0) {
             for (const item of outdatedItems) {
-              //Call API and insert items using the LONG/LAT to find the Stores
-              // const coors = await getLongLat(item.Store_ID);
-              // const LONG = coors.data.longitude;
-              // const LAT = coors.data.latitude;
+              //Call API 
 
-              const itemPrice = 5;
+              const itemPrice = 10;
               await updateItem(item.ID, item.Store_ID, itemPrice);
             }
         }
@@ -165,10 +224,8 @@ function RouteComponent() {
         if(emptyItems.length > 0){
           for (const stores of emptyItems){
             //Call API and insert items using the LONG/LAT to find the Stores
-            // const coors = await getLongLat(stores.ID);
-            // const LONG = coors.data.longitude;
-            // const LAT = coors.data.latitude;
             
+
             const itemName = "item z";
             const itemPrice = 1;
             await addNewItem(stores, itemName, itemPrice);
@@ -181,6 +238,7 @@ function RouteComponent() {
 
     const displayItems = async (nearbyStores: number[]) => {
       const results = [];
+      //gets the store's name, and all items in the store
       for (const store of nearbyStores) {
         try{
           const storeName = await axios.get("/api/store/getname", {
@@ -214,19 +272,32 @@ function RouteComponent() {
     };
 
     const fetchAndDisplay = async () => {
+    try {
       setLoading(true);
-      const cached = sessionStorage.getItem(cacheKey);
+      // Ensure location is fetched first, and cachedItems are loaded first 
+      await fetchLocation();
+      const cached = sessionStorage.getItem(`cachedData_${productID}`);
+      
+      //if cached items exist, parse them, set loading to false and stop
       if (cached) {
         cachedDataRef.current = JSON.parse(cached); 
         setLoading(false);
         return;
       }
 
+      //if not, get all stores and items, set the cached items in sessionStorage
       const nearbyStores = await fetchStoresAndItems();
+      if (!nearbyStores) throw new Error("Failed to fetch nearby stores.");
+
       const results = await displayItems(nearbyStores);
-      sessionStorage.setItem(cacheKey, JSON.stringify(results));
+      sessionStorage.setItem(`cachedData_${productID}`, JSON.stringify(results));
       cachedDataRef.current = results; 
       setLoading(false); 
+    } catch (error) {
+      console.error("Error in fetchAndDisplay:", error);
+      alert("An error occurred while loading data. Please try again.");
+      setLoading(false);
+    }
     };
 
     fetchAndDisplay();

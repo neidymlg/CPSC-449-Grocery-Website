@@ -50,7 +50,7 @@ router.get('/check', async (req, res) => {
           db.Sequelize.fn('POINT', LONG, LAT)
         ),
         '<',
-        750
+        16093.44 //10 miles
       ),
     });
     const storeIDs = results.map(store => store.ID);
@@ -85,7 +85,7 @@ router.get('/:id', async (req, res) => {
 
 // Add a new store
 router.post('/', async (req, res) => {
-  const { LONG, LAT, Name } = req.body;
+  const { storeID, LONG, LAT, Name } = req.body;
 
   if (!LONG || !LAT || !Name) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -93,7 +93,8 @@ router.post('/', async (req, res) => {
 
   try {
     const store = await Store.create({
-      geom_loc: db.Sequelize.fn('ST_GeomFromText', `POINT(${parseFloat(LONG)} ${parseFloat(LAT)})`),
+      ID: storeID,
+      geom_loc: db.Sequelize.fn('ST_GeomFromText', `POINT(${LONG} ${LAT})`),
       Name,
     });    
     console.log("Store added:", store.ID);
@@ -107,9 +108,8 @@ router.post('/', async (req, res) => {
 
 
 // Update a store
-router.put('/:id', async (req, res) => {
-  const storeId = req.params.id;
-  const { name, lat, long } = req.body;
+router.put('/', async (req, res) => {
+  const { storeId, name, lat, long } = req.body;
 
   // Basic validation
   if (!name || !lat || !long) {

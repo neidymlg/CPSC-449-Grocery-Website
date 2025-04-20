@@ -3,7 +3,7 @@ const router = express.Router();
 const productRoutes = require('./products'); // Import product routes
 const storeRoutes = require('./stores'); // Import store routes
 const itemRoutes = require('./item'); // Import item routes
-const userRoutes = require('./users'); // Import user routes
+const userRoutes = require('./users')
 const userOrderRoutes = require('./userOrder'); // Import user order routes
 const orderRoutes = require('./orders'); // Import order routes
 

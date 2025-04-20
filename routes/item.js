@@ -125,9 +125,8 @@ router.get('/check_no_items', async (req, res) => {
 });
 
 // Update item price
-router.put('/:id', async (req, res) => {
-  const itemId = req.params.id;
-  const { StoreID, ProductID, Price } = req.body;
+router.put('/', async (req, res) => {
+  const {ID, StoreID, ProductID, Price } = req.body;
 
   if (!StoreID || !ProductID || !Price) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -137,7 +136,7 @@ router.put('/:id', async (req, res) => {
     // Find the item by ID, StoreID, and ProductID
     const item = await Item.findOne({
       where: {
-        ID: itemId,
+        ID: ID,
         Store_ID: StoreID,
         Product_ID: ProductID,
       },

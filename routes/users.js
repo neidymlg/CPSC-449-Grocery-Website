@@ -50,10 +50,10 @@ router.post('/register', async (req, res) => {
     const { email, password } = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Email already in use.' });
-    }
+    // const existingUser = await User.findOne({ where: { email } });
+    // if (existingUser) {
+    //   return res.status(400).json({ error: 'Email already in use.' });
+    // }
 
     // Hash the password
     const saltRounds = 10;
@@ -61,8 +61,8 @@ router.post('/register', async (req, res) => {
 
     // Create the user
     const user = await User.create({
-      email,
-      password: hashedPassword,
+      Email: email,
+      Password: hashedPassword,
     });
 
     res.status(201).json({ message: 'User registered successfully.', user });

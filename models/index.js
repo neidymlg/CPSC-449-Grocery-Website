@@ -8,6 +8,7 @@ db.sequelize = sequelize;
 db.Products = require('./product.model')(sequelize, Sequelize);
 db.Store = require('./store.model')(sequelize, Sequelize);
 db.Item = require('./item.model')(sequelize, Sequelize);
+db.User = require('./user.model')(sequelize, Sequelize);
 db.User_Order = require('./userOrder.model')(sequelize, Sequelize);
 db.Orders = require('./orders.model')(sequelize, Sequelize);
 

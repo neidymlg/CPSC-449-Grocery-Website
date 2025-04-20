@@ -31,6 +31,7 @@ function RouteComponent() {
 
   // Fetch all orders
   useEffect(() => {
+    //gets all orders based on userID 
     const fetchOrders = async () => {
       try {
         const response = await axios.get('/api/orders/display', { params: { User_ID: userID } });
@@ -64,35 +65,41 @@ function RouteComponent() {
     setOrderItems([]);
   };
 
-  // Delete an order
+// Delete an order
 // Update the handleDeleteOrder function
 const handleDeleteOrder = async (orderId: number) => {
 
     try {
-      // Correct params from ID to Order_ID
+      // Deletes Items in Orders
       const user_order_res = await axios.delete('/api/user_order/delete', {
         params: { Order_ID: orderId } // Fixed parameter name
       });
       console.log('User_Order deleted:', user_order_res.data.message);
   
+      //Deletes actual Order
       const order_res = await axios.delete('/api/orders/delete', { 
         params: { ID: orderId } 
       });
       console.log('Order deleted:', order_res.data.message);
   
+      //takes out deleted order from cache
       setOrders(orders.filter(order => order.ID !== orderId));
-      if (selectedOrder?.ID === orderId) handleCloseItemsView();
+
+      handleCloseItemsView();
+      //if (selectedOrder?.ID === orderId) handleCloseItemsView();
     } catch (error) {
       console.error('Error deleting order:', error);
     }
   };
   
-  // Fix the typo in handleUpdateOrderName
+  // updates name
   const handleUpdateOrderName = async (orderId: number, newName: string) => {
     try {
       await axios.put('/api/orders/update', { ID: orderId, Name: newName });
+
+      //finds order to update, changes its name in the cached list
       setOrders(orders.map(order =>
-        order.ID === orderId ? { ...order, Name: newName } : order // Fixed 'Name' key
+        order.ID === orderId ? { ...order, Name: newName } : order 
       ));
     } catch (error) {
       console.error('Error updating order name:', error);
