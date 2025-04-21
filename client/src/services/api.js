@@ -1,13 +1,14 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Load environment variables from .env file
+
+dotenv.config({path: '../../../.env'}); // Load environment variables from .env file
 
 // This gets the token needed for the session.
 async function getToken() {
-    const client_id = process.env.kroger_client_id;
-    const client_secret = process.env.kroger_client_secret;
+    const client_id = process.env.KROGER_CLIENT_ID;
+    const client_secret = process.env.KROGER_CLIENT_SECRET;
 
-    console.log("Client ID: ", client_id);
-    console.log("Client Secret: ", client_secret);
+    // console.log("Client ID: ", client_id);
+    // console.log("Client Secret: ", client_secret);
 
     const response = await fetch('https://api-ce.kroger.com/v1/connect/oauth2/token', {
         method: 'POST',
@@ -36,7 +37,7 @@ async function getToken() {
 // This finds all the in a certain zip code.
 async function getStoresByZip(zipCode) {
     const my_token = await getToken();
-    const response = await fetch(`https://api-ce.kroger.com/v1/locations?filter.zipCode=${zipCode}&filter.limit=2`, {
+    const response = await fetch(`https://api-ce.kroger.com/v1/locations?filter.zipCode=${zipCode}&filter.limit=1`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${my_token}`,
@@ -65,7 +66,11 @@ async function searchProductInStore(query, store_id) {
     return data.data;
 }
 
+// console.log(client_id);
+// console.log(client_secret);
+
 const stores = await getStoresByZip('92832')
+console.log(stores) // Shows the stores in the area
 // const first_store_id = stores[0].locationId
 // console.log(first_store_id)
 
