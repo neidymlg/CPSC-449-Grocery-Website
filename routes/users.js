@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const db = require('../models'); // Import your Sequelize models
+
 const User = db.User;
 
 // --- Passport Local Strategy Setup ---
@@ -16,11 +17,11 @@ passport.use(new LocalStrategy(
     try {
       const user = await User.findOne({ where: { email } });
       if (!user) {
-        return done(null, false, { message: 'Incorrect email.' });
+        return done(null, false);
       }
-      const passwordMatch = await bcrypt.compare(password, user.password);
+      const passwordMatch = await bcrypt.compare(password, user.Password);
       if (!passwordMatch) {
-        return done(null, false, { message: 'Incorrect password.' });
+        return done(null, false);
       }
       return done(null, user);
     } catch (error) {
@@ -43,6 +44,7 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+
 // --- User Registration Route ---
 router.post('/register', async (req, res) => {
   try {
@@ -50,10 +52,10 @@ router.post('/register', async (req, res) => {
     const { email, password } = req.body;
 
     // Check if user already exists
-    // const existingUser = await User.findOne({ where: { email } });
-    // if (existingUser) {
-    //   return res.status(400).json({ error: 'Email already in use.' });
-    // }
+    const existingUser = await User.findOne({ where: { Email: email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already in use.' });
+    }
 
     // Hash the password
     const saltRounds = 10;
@@ -65,7 +67,16 @@ router.post('/register', async (req, res) => {
       Password: hashedPassword,
     });
 
-    res.status(201).json({ message: 'User registered successfully.', user });
+        // Log the user in programmatically
+        req.login(user, (err) => {
+          if (err) {
+            console.error('Error logging in user after registration:', err);
+            return next(err);
+          }
+    
+          // Respond with success and user info
+          res.status(201).json({ message: 'User registered and logged in successfully.'});
+        });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ error: 'Error registering user.' });
@@ -80,7 +91,20 @@ router.post('/login', passport.authenticate('local', {
 }), (req, res) => {
   // If authentication is successful, this function will be called.
   // You can add custom logic here if needed.
-  res.json({ message: 'Login successful', user: req.user });
+  res.json({ message: 'Login successful'});
+});
+
+router.get('/current-user', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ 
+      isAuthenticated: true,
+      user: {
+        id: req.user.id
+      }
+    });
+  } else {
+    res.json({ isAuthenticated: false });
+  }
 });
 
 // --- Logout Route ---
@@ -95,7 +119,7 @@ router.get('/logout', (req, res, next) => {
 router.get('/profile', ensureAuthenticated, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id); // req.user is set by passport
-    res.json(user);
+    res.json({ userId: req.user.id});
   } catch (error) {
     console.error("Error fetching user profile:", error);
     res.status(500).json({ error: 'Error fetching user profile' });

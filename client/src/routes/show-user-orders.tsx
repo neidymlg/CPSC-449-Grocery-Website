@@ -2,12 +2,6 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-//=====================================================================================
-// REPLACE WITH THE ACTUAL USER ID
-//
-const userID = 1;
-//======================================================================================
-
 export const Route = createFileRoute('/show-user-orders')({
   component: RouteComponent,
 });
@@ -27,12 +21,22 @@ type OrderItem = {
 function RouteComponent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);  
 
   // Fetch all orders
   useEffect(() => {
+      const getID = async () => {
+        try {
+          // Fetch the user ID first
+          const response = await axios.get("/api/user/current-user");
+          return response.data.user.id;
+        } catch (error) {
+          console.error("Error initializing data:", error);
+        }
+      };
+
     //gets all orders based on userID 
-    const fetchOrders = async () => {
+    const fetchOrders = async (userID: number) => {
       try {
         const response = await axios.get('/api/orders/display', { params: { User_ID: userID } });
         console.log('Fetched orders:', response.data);
@@ -42,7 +46,12 @@ function RouteComponent() {
       }
     };
 
-    fetchOrders();
+    const initialize = async () => {
+      const userID = await getID();
+      await fetchOrders(userID);
+    }
+
+    initialize();
   }, []);
 
   // Fetch items for a specific order
@@ -86,7 +95,6 @@ const handleDeleteOrder = async (orderId: number) => {
       setOrders(orders.filter(order => order.ID !== orderId));
 
       handleCloseItemsView();
-      //if (selectedOrder?.ID === orderId) handleCloseItemsView();
     } catch (error) {
       console.error('Error deleting order:', error);
     }

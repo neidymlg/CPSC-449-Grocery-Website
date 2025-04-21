@@ -2,12 +2,6 @@ import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-route
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-//=====================================================================================
-// REPLACE WITH THE ACTUAL USER ID
-//
-const userId = 1; // Replace with the actual logged-in user's ID
-//======================================================================================
-
 export const Route = createFileRoute('/create-order')({
   component: RouteComponent,
 });
@@ -29,6 +23,7 @@ function RouteComponent() {
   const item = location.state as unknown as CachedItem; // Access the passed item object
   const [cachedItems, setCachedItems] = useState<CachedItem[]>([]); // Explicitly define the type
   const [customName, setCustomName] = useState<string>(''); // Customizable name
+  const [userId, setUserId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   if (!item) {
@@ -36,8 +31,22 @@ function RouteComponent() {
   }
 
   useEffect(() => {
-    const items = JSON.parse(sessionStorage.getItem('orderItems') || '[]') as CachedItem[];
-    setCachedItems(items);
+    const initialize = async () => {
+      try {
+        // Fetch the user ID first
+        const response = await axios.get("/api/user/current-user");
+        setUserId(response.data.user.id);
+  
+        // Then load cached items
+        const items = JSON.parse(sessionStorage.getItem('orderItems') || '[]') as CachedItem[];
+        setCachedItems(items);
+      } catch (error) {
+        console.error("Error initializing data:", error);
+      }
+    };
+  
+    initialize(); // Call the async function
+  
   }, []);
 
   // Add the current item to the cache
