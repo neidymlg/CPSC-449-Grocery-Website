@@ -1,10 +1,17 @@
 import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
+
 import axios from "axios";
+
+// Importing and setting up the configuration for dotenv to use environment variables.
+import dotenv from "dotenv";
+dotenv.config({path: '../../../../.env'}); // Load environment variables from .env file
+
 
 export const Route = createFileRoute("/display-items/$id")({
     component: RouteComponent,
   });
+
 
 function RouteComponent() {
   //gets productID from findproduct.tsx, this will show up in the url
@@ -73,6 +80,95 @@ function RouteComponent() {
         }
       }
     };
+
+
+
+/******************************************************************************/
+
+
+    // Creates a token needed for the API session.
+    async function getToken() {
+      const clientId = process.env.KROGER_CLIENT_ID;
+      const clientSecret = process.env.KROGER_CLIENT_SECRET;
+
+      const response = await fetch('https://api-ce.kroger.com/v1/connect/oauth2/token', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+              grant_type: 'client_credentials',
+              client_id: clientId ?? '',
+              client_secret: clientSecret ?? '',
+              scope: ' product.compact',
+          }),
+      });
+  
+      if (!response.ok) {
+          console.error(`Token Error ${response.status}: ${response.statusText}`);
+          const errorBody = await response.text();
+          console.error(errorBody); // Log the error response body
+          return null;
+      }
+  
+      const data = await response.json();
+      return data.access_token; // Return the token
+  };
+
+  // Finds 10 Stores near the provided latitude and longitude.
+  async function findStores(LAT: string, LONG: string) {
+      const my_token = await getToken();
+      const searchLimit = 10;
+      const searchRange = 10;   // The range in miles to search for stores from the LAT and LONG provided.
+      const response = await fetch(`https://api-ce.kroger.com/v1/locations?filter.latLong.near=${LAT},${LONG}&filter.radiusInMiles=${searchRange}&filter.limit=${searchLimit}`, {
+          method: 'GET',
+          headers: {
+              'Authorization': `Bearer ${my_token}`,
+              'Accept': 'application/json',
+          },
+      });
+      
+      // Get the data from the json response.
+      const data = await response.json();
+      const returnedData = [];
+      for (let i =0; i < data.data.length; i++) {
+        const storeData = {
+          "id": data.data[i].locationId,
+          "name": data.data[i].name,
+          "lat": data.data[i].geolocation.latitude,
+          "long": data.data[i].geolocation.longitude,
+        };
+        returnedData.push(storeData);
+      }
+      return returnedData;
+  };
+
+
+  async function findItem(query: string, store_id: string) {
+    const my_token = await getToken();
+    const searchLimit = 5;
+    const response = await fetch(`https://api-ce.kroger.com/v1/products?filter.term=${query}&filter.locationId=${store_id}&filter.limit=${searchLimit}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${my_token}`,
+            'Accept': 'application/json',
+        },
+    });
+    const data = await response.json();
+    const returnedData = [];
+    for (let i = 0; i < data.data.length; i++) {
+      const itemData = {"id": store_id,
+                        "name": data.data[i].description,
+                        "price": data.data[i].items[0].price.regular
+      };
+      returnedData.push(itemData);
+    }
+    return returnedData;
+  }
+
+
+/******************************************************************************/
+
 
     //checks if we have stored any nearby stores, passes the storeID
     const checkNearbyStores = async () => {    
@@ -188,19 +284,34 @@ function RouteComponent() {
       // else: for nearby stores
       if (!nearbyStores || nearbyStores.length === 0) {
         // ADD API to this section !!!!!
+        const stores = await findStores(latitudeRef.current, longitudeRef.current);
 
-        const storeID = 1;
-        const storeLat = 33.7572;
-        const storeLon = -117.9111;
-        const storeName = "Store Name 6";
-        await addNewStore(storeID, storeLon, storeLat, storeName);
+        for (let i = 0; i < stores.length; i++) {
+          const storeID = stores[i].id;
+          const storeLat = stores[i].lat;
+          const storeLon = stores[i].long;
+          const storeName = stores[i].name;
+          await addNewStore(storeID, storeLon, storeLat, storeName);
+          nearbyStores.push(storeID); // Add the new store ID to nearbyStores
+        }
+        // const storeID = 1;
+        // const storeLat = 33.7572;
+        // const storeLon = -117.9111;
+        // const storeName = "Store Name 6";
+        // await addNewStore(storeID, storeLon, storeLat, storeName);
 
-        nearbyStores.push(storeID); // Add the new store ID to nearbyStores
+        // nearbyStores.push(storeID); // Add the new store ID to nearbyStores
 
         // call API for finding items
-        const itemName = "item 3";
-        const itemPrice = 1;
-        await addNewItem(storeID, itemName, itemPrice);
+        for (let i = 0; i < stores.length; i++) {
+          const itemData = await findItem('blueberries', stores[i].id);
+          const itemName =itemData[i].name;
+          const itemPrice = itemData[i].price;
+          await addNewItem(stores[i].id, itemName, itemPrice);
+        }
+        // const itemName = "item 3";
+        // const itemPrice = 1;
+        // await addNewItem(storeID, itemName, itemPrice);
 
         return nearbyStores;
 
@@ -215,8 +326,10 @@ function RouteComponent() {
         if (outdatedItems.length > 0) {
             for (const item of outdatedItems) {
               //Call API 
+              const itemData = await findItem(item.Name, item.Store_ID);
+              const itemPrice = itemData[0].price;
 
-              const itemPrice = 10;
+              // const itemPrice = 10;
               await updateItem(item.ID, item.Store_ID, itemPrice);
             }
         }
@@ -224,11 +337,14 @@ function RouteComponent() {
         if(emptyItems.length > 0){
           for (const stores of emptyItems){
             //Call API and insert items using the LONG/LAT to find the Stores
-            
 
-            const itemName = "item z";
-            const itemPrice = 1;
-            await addNewItem(stores, itemName, itemPrice);
+            const itemData = await findItem('blueberries', stores);
+
+            for (let i = 0; i < itemData.length; i++) {
+              const itemName = itemData[0].name;
+              const itemPrice = itemData[0].price;
+              await addNewItem(stores, itemName, itemPrice);
+            }
           }
         }
 
