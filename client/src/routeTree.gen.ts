@@ -19,7 +19,6 @@ import { Route as CreateAccountImport } from './routes/create-account'
 import { Route as AboutImport } from './routes/about'
 import { Route as ApiProductSearchImport } from './routes/ApiProductSearch'
 import { Route as IndexImport } from './routes/index'
-import { Route as DisplayItemsApiImport } from './routes/display-items/api'
 import { Route as DisplayItemsIdImport } from './routes/display-items/$id'
 
 // Create/Update Routes
@@ -69,12 +68,6 @@ const ApiProductSearchRoute = ApiProductSearchImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const DisplayItemsApiRoute = DisplayItemsApiImport.update({
-  id: '/display-items/api',
-  path: '/display-items/api',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -151,13 +144,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisplayItemsIdImport
       parentRoute: typeof rootRoute
     }
-    '/display-items/api': {
-      id: '/display-items/api'
-      path: '/display-items/api'
-      fullPath: '/display-items/api'
-      preLoaderRoute: typeof DisplayItemsApiImport
-      parentRoute: typeof rootRoute
-    }
   }
 }
 
@@ -173,7 +159,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/show-user-orders': typeof ShowUserOrdersRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
-  '/display-items/api': typeof DisplayItemsApiRoute
 }
 
 export interface FileRoutesByTo {
@@ -186,7 +171,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/show-user-orders': typeof ShowUserOrdersRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
-  '/display-items/api': typeof DisplayItemsApiRoute
 }
 
 export interface FileRoutesById {
@@ -200,7 +184,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/show-user-orders': typeof ShowUserOrdersRoute
   '/display-items/$id': typeof DisplayItemsIdRoute
-  '/display-items/api': typeof DisplayItemsApiRoute
 }
 
 export interface FileRouteTypes {
@@ -215,7 +198,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/show-user-orders'
     | '/display-items/$id'
-    | '/display-items/api'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -227,7 +209,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/show-user-orders'
     | '/display-items/$id'
-    | '/display-items/api'
   id:
     | '__root__'
     | '/'
@@ -239,7 +220,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/show-user-orders'
     | '/display-items/$id'
-    | '/display-items/api'
   fileRoutesById: FileRoutesById
 }
 
@@ -253,7 +233,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ShowUserOrdersRoute: typeof ShowUserOrdersRoute
   DisplayItemsIdRoute: typeof DisplayItemsIdRoute
-  DisplayItemsApiRoute: typeof DisplayItemsApiRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -266,7 +245,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ShowUserOrdersRoute: ShowUserOrdersRoute,
   DisplayItemsIdRoute: DisplayItemsIdRoute,
-  DisplayItemsApiRoute: DisplayItemsApiRoute,
 }
 
 export const routeTree = rootRoute
@@ -287,8 +265,7 @@ export const routeTree = rootRoute
         "/findproduct",
         "/login",
         "/show-user-orders",
-        "/display-items/$id",
-        "/display-items/api"
+        "/display-items/$id"
       ]
     },
     "/": {
@@ -317,9 +294,6 @@ export const routeTree = rootRoute
     },
     "/display-items/$id": {
       "filePath": "display-items/$id.tsx"
-    },
-    "/display-items/api": {
-      "filePath": "display-items/api.js"
     }
   }
 }

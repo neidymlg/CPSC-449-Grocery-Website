@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
       },
     },
     Store_ID: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(8),
       allowNull: false,
       primaryKey: true,
       references: {

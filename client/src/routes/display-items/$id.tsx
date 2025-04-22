@@ -1,12 +1,7 @@
-import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useParams, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 
 import axios from "axios";
-
-// Importing and setting up the configuration for dotenv to use environment variables.
-import dotenv from "dotenv";
-dotenv.config({path: '../../../../.env'}); // Load environment variables from .env file
-
 
 export const Route = createFileRoute("/display-items/$id")({
     component: RouteComponent,
@@ -16,7 +11,13 @@ export const Route = createFileRoute("/display-items/$id")({
 function RouteComponent() {
   //gets productID from findproduct.tsx, this will show up in the url
   const { id: productID } = useParams({ from: "/display-items/$id" });
+  const search = useSearch({ from: "/display-items/$id" });
+  const productName = search.name; // Access the `name` parameter
 
+  if(!productName){
+    alert("Error in finding product name");
+    return;
+  }
   //for storing lat/long per rerender (so it does not have to go to sessionStorage everytime )
   const latitudeRef = useRef<string | null>(null); 
   const longitudeRef = useRef<string | null>(null);
@@ -24,7 +25,7 @@ function RouteComponent() {
   //storing information for rerender
   const cachedDataRef = useRef<{
     storeName: string;
-    items: { Name: string; Price: number; Store_ID: number; Product_ID: number; Item_ID: number; ID: number }[];
+    items: { Name: string; Price: number; Store_ID: string; Product_ID: number; Item_ID: number; ID: number }[];
   }[] | null>(null);
 
   // used to ensure the async function/cached items loads
@@ -88,84 +89,123 @@ function RouteComponent() {
 
     // Creates a token needed for the API session.
     async function getToken() {
-      const clientId = process.env.KROGER_CLIENT_ID;
-      const clientSecret = process.env.KROGER_CLIENT_SECRET;
-
-      const response = await fetch('https://api-ce.kroger.com/v1/connect/oauth2/token', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-              grant_type: 'client_credentials',
-              client_id: clientId ?? '',
-              client_secret: clientSecret ?? '',
-              scope: ' product.compact',
-          }),
-      });
-  
-      if (!response.ok) {
+      try {
+        const response = await fetch("/api/kroger/token");
+        if (!response.ok) {
           console.error(`Token Error ${response.status}: ${response.statusText}`);
-          const errorBody = await response.text();
-          console.error(errorBody); // Log the error response body
           return null;
+        }
+    
+        const data = await response.json();
+        return data.token; // Return the token from the backend
+      } catch (error) {
+        console.error("Error fetching token:", error);
+        return null;
       }
-  
-      const data = await response.json();
-      return data.access_token; // Return the token
-  };
+    }
 
   // Finds 10 Stores near the provided latitude and longitude.
   async function findStores(LAT: string, LONG: string) {
-      const my_token = await getToken();
+    try {
+      const token = await getToken();
       const searchLimit = 10;
-      const searchRange = 10;   // The range in miles to search for stores from the LAT and LONG provided.
-      const response = await fetch(`https://api-ce.kroger.com/v1/locations?filter.latLong.near=${LAT},${LONG}&filter.radiusInMiles=${searchRange}&filter.limit=${searchLimit}`, {
-          method: 'GET',
-          headers: {
-              'Authorization': `Bearer ${my_token}`,
-              'Accept': 'application/json',
-          },
+      const searchRange = 10;
+  
+      // Fetch stores from the backend proxy
+      const response = await axios.get(`/api/kroger/locations`, {
+        params: {
+          lat: LAT,
+          long: LONG,
+          radiusInMiles: searchRange,
+          limit: searchLimit,
+          token: token
+        },
       });
-      
-      // Get the data from the json response.
-      const data = await response.json();
+  
+      // Check if the response is valid
+      if (!response.data || !response.data.data) {
+        console.error("Invalid response from /api/kroger/locations:", response.data);
+        alert("No stores found.");
+        return [];
+      }
+  
+      const data = response.data.data;
+  
+      // Log and alert the store IDs
       const returnedData = [];
-      for (let i =0; i < data.data.length; i++) {
+      for (let i = 0; i < data.length; i++) {
         const storeData = {
-          "id": data.data[i].locationId,
-          "name": data.data[i].name,
-          "lat": data.data[i].geolocation.latitude,
-          "long": data.data[i].geolocation.longitude,
+          id: data[i].locationId,
+          name: data[i].name,
+          lat: data[i].geolocation.latitude,
+          long: data[i].geolocation.longitude,
         };
         returnedData.push(storeData);
+  
       }
+  
       return returnedData;
-  };
-
-
-  async function findItem(query: string, store_id: string) {
-    const my_token = await getToken();
-    const searchLimit = 5;
-    const response = await fetch(`https://api-ce.kroger.com/v1/products?filter.term=${query}&filter.locationId=${store_id}&filter.limit=${searchLimit}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${my_token}`,
-            'Accept': 'application/json',
-        },
-    });
-    const data = await response.json();
-    const returnedData = [];
-    for (let i = 0; i < data.data.length; i++) {
-      const itemData = {"id": store_id,
-                        "name": data.data[i].description,
-                        "price": data.data[i].items[0].price.regular
-      };
-      returnedData.push(itemData);
+    } catch (error) {
+      console.error("Error in findStores:", error);
+      alert("Failed to fetch stores. Please try again.");
+      return [];
     }
-    return returnedData;
   }
 
+  async function findItem(query: string, store_id: string) {
+    try {
+      const my_token = await getToken(); // Fetch the token from the backend
+  
+      const response = await axios.get(`/api/kroger/items`, {
+        params: {
+          query: query,
+          store_id: store_id,
+          token: my_token,
+        },
+      });
+  
+      if (!response.data || response.data.length === 0) {
+        alert("no items");
+        console.warn("No items found for query:", query);
+        return [];
+      }
+  
+      console.log("Items fetched:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error in findItem:", error);
+      alert("Failed to fetch items. Please try again.");
+      return [];
+    }
+  }
+
+  const processBatchAndAddItems = async (storeId: string, query: string) => {
+    try {
+      // Fetch a batch of items using findItem
+      const itemsBatch = await findItem(query, storeId);
+  
+      if (!itemsBatch || itemsBatch.length === 0) {
+        console.warn("No items found for the query:", query);
+        return;
+      }
+  
+      // Iterate over the batch and add each item
+      for (const item of itemsBatch) {
+        const itemName = item.name;
+        const itemPrice = item.price;
+  
+        try {
+          // Call addNewItem for each item
+          await addNewItem(storeId, itemName, itemPrice);
+          console.log(`Successfully added item: ${itemName} with price: ${itemPrice}`);
+        } catch (error) {
+          console.error(`Error adding item: ${itemName}`, error);
+        }
+      }
+    } catch (error) {
+      console.error("Error processing batch and adding items:", error);
+    }
+  };
 
 /******************************************************************************/
 
@@ -184,7 +224,7 @@ function RouteComponent() {
     };
   
     //checks if items have not updated recently, returns all item information
-    const checkItemsForCurrentDay = async (storeIDs: number[]) => {
+    const checkItemsForCurrentDay = async (storeIDs: string[]) => {
       try {    
         const response = await axios.get("/api/item/check_current_day", {
           params: { StoreIDs: storeIDs.join(','), ProductID: productID },
@@ -197,7 +237,7 @@ function RouteComponent() {
     };
     
     //adds new store, returns id of all stores
-    const addNewStore = async (storeID: number, longitude: number, latitude: number, name: string) => {
+    const addNewStore = async (storeID: string, longitude: number, latitude: number, name: string) => {
       try {
         const response = await axios.post("/api/store", {
           storeID: storeID,
@@ -206,7 +246,6 @@ function RouteComponent() {
           Name: name,
         });
         console.log("Successfully read data for Store ID: ", response.data.id);
-        return response.data.id; // Returns the ID of the newly added store
       } catch (error) {
         console.error("Error adding new store:", error);
         throw error;
@@ -215,7 +254,7 @@ function RouteComponent() {
 
     //adds new item into empty store
     const addNewItem = async (
-      storeId: number,
+      storeId: string,
       name: string,
       price: number
     ) => 
@@ -235,7 +274,7 @@ function RouteComponent() {
     };
 
     //updates item's price
-    const updateItem = async (itemId: number, storeId: number, price: number) => {
+    const updateItem = async (itemId: number, storeId: string, price: number) => {
       try {
         const response = await axios.put(`/api/item`, {
           ID: itemId,
@@ -251,7 +290,7 @@ function RouteComponent() {
     };
 
     //checks if store doesn't have items, returns storeIDS
-    const checkEmptyStores = async (storeIDs: number[]) => {
+    const checkEmptyStores = async (storeIDs: string[]) => {
       try {
         const response = await axios.get("/api/item/check_no_items", {
           params: { 
@@ -266,55 +305,25 @@ function RouteComponent() {
       }
     };
 
-    //DELETE ???????
-    // const getLongLat = async (storeID: number) =>{
-    //   try {
-    //     const response = await axios.get(`/api/store/${storeID}`);
-    //     return response;
-    //   } catch (error) {
-    //     console.error("Error with fetching long/lat:", error);
-    //     throw error;
-    //   }
-    // }
-
     const fetchStoresAndItems = async () => {
       let nearbyStores = await checkNearbyStores();
       
       // if: for new stores and items
       // else: for nearby stores
       if (!nearbyStores || nearbyStores.length === 0) {
-        // ADD API to this section !!!!!
         const stores = await findStores(latitudeRef.current, longitudeRef.current);
 
         for (let i = 0; i < stores.length; i++) {
-          const storeID = stores[i].id;
+          const storeID = stores[i].id.toString();
           const storeLat = stores[i].lat;
           const storeLon = stores[i].long;
           const storeName = stores[i].name;
           await addNewStore(storeID, storeLon, storeLat, storeName);
           nearbyStores.push(storeID); // Add the new store ID to nearbyStores
+          await processBatchAndAddItems(storeID, productName);
         }
-        // const storeID = 1;
-        // const storeLat = 33.7572;
-        // const storeLon = -117.9111;
-        // const storeName = "Store Name 6";
-        // await addNewStore(storeID, storeLon, storeLat, storeName);
-
-        // nearbyStores.push(storeID); // Add the new store ID to nearbyStores
-
-        // call API for finding items
-        for (let i = 0; i < stores.length; i++) {
-          const itemData = await findItem('blueberries', stores[i].id);
-          const itemName =itemData[i].name;
-          const itemPrice = itemData[i].price;
-          await addNewItem(stores[i].id, itemName, itemPrice);
-        }
-        // const itemName = "item 3";
-        // const itemPrice = 1;
-        // await addNewItem(storeID, itemName, itemPrice);
 
         return nearbyStores;
-
       }
       else{
        //checks if any items are out of date, returns item information
@@ -327,10 +336,10 @@ function RouteComponent() {
             for (const item of outdatedItems) {
               //Call API 
               const itemData = await findItem(item.Name, item.Store_ID);
-              const itemPrice = itemData[0].price;
-
-              // const itemPrice = 10;
-              await updateItem(item.ID, item.Store_ID, itemPrice);
+              for (let i = 0; i < itemData.length; i++) {
+                const itemPrice = itemData[i].price;
+                await updateItem(item.ID, item.Store_ID, itemPrice);
+              }
             }
         }
 
@@ -338,13 +347,16 @@ function RouteComponent() {
           for (const stores of emptyItems){
             //Call API and insert items using the LONG/LAT to find the Stores
 
-            const itemData = await findItem('blueberries', stores);
+            const itemData = await findItem(productName, stores);
 
             for (let i = 0; i < itemData.length; i++) {
-              const itemName = itemData[0].name;
-              const itemPrice = itemData[0].price;
-              await addNewItem(stores, itemName, itemPrice);
-            }
+              const itemName = itemData[i].name;
+              const itemPrice = itemData[i].price;
+             await addNewItem(stores, itemName, itemPrice);
+           }
+          //  const itemName = "item z";
+          //  const itemPrice = 10;
+          //  await addNewItem(stores, itemName, itemPrice);
           }
         }
 
@@ -352,7 +364,7 @@ function RouteComponent() {
       }
     };
 
-    const displayItems = async (nearbyStores: number[]) => {
+    const displayItems = async (nearbyStores: string[]) => {
       const results = [];
       //gets the store's name, and all items in the store
       for (const store of nearbyStores) {
@@ -365,11 +377,9 @@ function RouteComponent() {
             params: { StoreID: store, ProductID: productID }
           });
 
-          // alert("Item ID: " + item.data[0].ID);
-          // alert("Store ID: " + item.data[0].Store_ID);
           results.push({
             storeName: storeName.data.Name,
-            items: item.data.map((item: { Name: string; Price: number, Store_ID: number, Product_ID: number, Item_ID: number, ID: number }) => ({
+            items: item.data.map((item: { Name: string; Price: number, Store_ID: string, Product_ID: number, Item_ID: number, ID: number }) => ({
               Name: item.Name,
               Price: item.Price,
               Store_ID: item.Store_ID,
@@ -403,8 +413,6 @@ function RouteComponent() {
 
       //if not, get all stores and items, set the cached items in sessionStorage
       const nearbyStores = await fetchStoresAndItems();
-      if (!nearbyStores) throw new Error("Failed to fetch nearby stores.");
-
       const results = await displayItems(nearbyStores);
       sessionStorage.setItem(`cachedData_${productID}`, JSON.stringify(results));
       cachedDataRef.current = results; 

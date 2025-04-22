@@ -44,7 +44,8 @@ useEffect(() => {
           console.log("Product already exists:", exProduct);
           //navigates to next page
           navigate({
-            to: `/display-items/${exProduct.id.toString()}`
+            to: `/display-items/${exProduct.id.toString()}`,
+            search: { name: exProduct.name },
           });
         } else {
           // adds product to the db
@@ -58,7 +59,8 @@ useEffect(() => {
           setSearchTerm("");
           //navigates to next page
           navigate({
-            to: `/display-items/${response.data.id}`
+            to: `/display-items/${response.data.id}`,
+            search: { name: searchTerm}
           });
         }
       } catch (error) {

@@ -21,9 +21,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const routes = require('./routes'); // Import the main routes file
+const krogerRoutes = require('./routes/kroger'); // Import the Kroger routes file
 
 // Mount the routes
 app.use('/', routes);
+app.use('/api', krogerRoutes); // Mount Kroger routes under /api
+
 
 
 app.listen(port, () => {
