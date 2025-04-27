@@ -473,34 +473,42 @@ function RouteComponent() {
             <div key={i} className="bg-white p-4 rounded-lg shadow">
               <h2 className="text-xl font-semibold">{store.storeName}</h2>
               <div className="mt-2 space-y-2">
-                {store.items.map((item, j) => (
-                  <div key={j} className="flex justify-between py-2 border-b">
-                    <span>{item.Name}</span>
-                    <div>
-                      <span className="font-medium pr-4">${item.Price}</span>
-                      <button
-                        onClick={() => {
-                          if (item) {
-                            navigate({
-                              to: "/create-order", // Navigate to the create-order route
-                              state: {
-                                ...item,
-                                storeName: store.storeName,
-                                quantity: 1,
-                                totalPrice: item.Price,
-                              }, // Pass the item object as state
-                            });
-                          } else {
-                            alert("Item data is missing!");
-                          }
-                        }}
-                        className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
+                {store.items.map(
+                  (item, j) =>
+                    item.Price > 0 && (
+                      <div
+                        key={j}
+                        className="flex justify-between py-2 border-b"
                       >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                        <span>{item.Name}</span>
+                        <div>
+                          <span className="font-medium pr-4">
+                            ${item.Price}
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (item) {
+                                navigate({
+                                  to: "/create-order", // Navigate to the create-order route
+                                  state: {
+                                    ...item,
+                                    storeName: store.storeName,
+                                    quantity: 1,
+                                    totalPrice: item.Price,
+                                  }, // Pass the item object as state
+                                });
+                              } else {
+                                alert("Item data is missing!");
+                              }
+                            }}
+                            className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )
+                )}
               </div>
             </div>
           ))}
