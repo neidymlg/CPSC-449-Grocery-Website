@@ -362,14 +362,16 @@ function RouteComponent() {
 
         //if outdated, use a for loop to update
         if (outdatedItems.length > 0) {
+          alert("Entered outdated");// DELETE.....................................................          
           for (const item of outdatedItems) {
-            //Call API
-            const itemData = await findItem(item.Name, item.Store_ID);
-            for (let i = 0; i < itemData.length; i++) {
-              const itemPrice = itemData[i].price;
-              await updateItem(item.ID, item.Store_ID, itemPrice);
+              //Call API 
+
+              const itemData = await findItem(item.Name.split(" ").slice(0, 8).join(" "), item.Store_ID);
+              for (let i = 0; i < itemData.length; i++) {
+                const itemPrice = itemData[i].price;
+                await updateItem(item.ID, item.Store_ID, itemPrice);
+              }
             }
-          }
         }
 
         if (emptyItems.length > 0) {

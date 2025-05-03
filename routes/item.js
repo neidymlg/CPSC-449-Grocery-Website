@@ -70,7 +70,7 @@ router.get('/check_current_day', async (req, res) => {
 
   try {
     const results = await Item.findAll({
-      attributes: ['ID', 'Store_ID'],
+      attributes: ['ID', 'Store_ID', 'Name'],
       where: {
         Store_ID: {
           [db.Sequelize.Op.in]: storeIdArray
@@ -143,7 +143,7 @@ router.get('/check_no_items', async (req, res) => {
 router.put('/', async (req, res) => {
   const {ID, StoreID, ProductID, Price } = req.body;
 
-  if (!StoreID || !ProductID || !Price) {
+  if (!StoreID || !ProductID || Price === null || Price === undefined) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
