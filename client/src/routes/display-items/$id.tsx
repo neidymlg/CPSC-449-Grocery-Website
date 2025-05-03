@@ -74,6 +74,135 @@ function RouteComponent() {
       }
     };
 
+    /******************************************************************************/
+
+    // Creates a token needed for the API session.
+    async function getToken() {
+      try {
+        const response = await fetch("/api/kroger/token");
+        if (!response.ok) {
+          console.error(
+            `Token Error ${response.status}: ${response.statusText}`
+          );
+          return null;
+        }
+
+        const data = await response.json();
+        return data.token; // Return the token from the backend
+      } catch (error) {
+        console.error("Error fetching token:", error);
+        return null;
+      }
+    }
+
+    // Finds 10 Stores near the provided latitude and longitude.
+    async function findStores(LAT: string, LONG: string) {
+      try {
+        const token = await getToken();
+        const searchLimit = 5;
+        const searchRange = 1;
+
+        // Fetch stores from the backend proxy
+        const response = await axios.get(`/api/kroger/locations`, {
+          params: {
+            lat: LAT,
+            long: LONG,
+            radiusInMiles: searchRange,
+            limit: searchLimit,
+            token: token,
+          },
+        });
+
+        // Check if the response is valid
+        if (!response.data || !response.data.data) {
+          console.error(
+            "Invalid response from /api/kroger/locations:",
+            response.data
+          );
+          alert("No stores found.");
+          return [];
+        }
+
+        const data = response.data.data;
+
+        // Log and alert the store IDs
+        const returnedData = [];
+        for (let i = 0; i < data.length; i++) {
+          const storeData = {
+            id: data[i].locationId,
+            name: data[i].name,
+            lat: data[i].geolocation.latitude,
+            long: data[i].geolocation.longitude,
+          };
+          returnedData.push(storeData);
+        }
+
+        return returnedData;
+      } catch (error) {
+        console.error("Error in findStores:", error);
+        alert("Failed to fetch stores. Please try again.");
+        return [];
+      }
+    }
+
+    async function findItem(query: string, store_id: string) {
+      try {
+        const my_token = await getToken(); // Fetch the token from the backend
+
+        const response = await axios.get(`/api/kroger/items`, {
+          params: {
+            query: query,
+            store_id: store_id,
+            token: my_token,
+          },
+        });
+
+        if (!response.data || response.data.length === 0) {
+          console.warn("No items found for query:", query);
+          return [];
+        }
+
+        console.log("Items fetched:", response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Error in findItem:", error);
+        alert("Failed to fetch items. Please try again.");
+        return [];
+      }
+    }
+
+    const processBatchAndAddItems = async (storeId: string, query: string) => {
+      try {
+        // Fetch a batch of items using findItem
+        const itemsBatch = await findItem(query, storeId);
+
+        if (!itemsBatch || itemsBatch.length === 0) {
+          console.warn("No items found for the query:", query);
+          return;
+        }
+
+        // Iterate over the batch and add each item
+        for (const item of itemsBatch) {
+          const itemName = item.name;
+          const itemPrice = item.price;
+
+          try {
+            // Call addNewItem for each item
+            await addNewItem(storeId, itemName, itemPrice);
+            console.log(
+              `Successfully added item: ${itemName} with price: ${itemPrice}`
+            );
+          } catch (error) {
+            console.error(`Error adding item: ${itemName}`, error);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing batch and adding items:", error);
+      }
+    };
+
+    /******************************************************************************/
+
     //checks if we have stored any nearby stores, passes the storeID
     const checkNearbyStores = async () => {    
       try{
@@ -285,19 +414,21 @@ function RouteComponent() {
         return;
       }
 
-      //if not, get all stores and items, set the cached items in sessionStorage
-      const nearbyStores = await fetchStoresAndItems();
-      if (!nearbyStores) throw new Error("Failed to fetch nearby stores.");
-
-      const results = await displayItems(nearbyStores);
-      sessionStorage.setItem(`cachedData_${productID}`, JSON.stringify(results));
-      cachedDataRef.current = results; 
-      setLoading(false); 
-    } catch (error) {
-      console.error("Error in fetchAndDisplay:", error);
-      alert("An error occurred while loading data. Please try again.");
-      setLoading(false);
-    }
+        //if not, get all stores and items, set the cached items in sessionStorage
+        const nearbyStores = await fetchStoresAndItems();
+        const results = await displayItems(nearbyStores);
+        const filteredResults = results.filter(store => store.items.length > 0);
+        sessionStorage.setItem(
+          `cachedData_${productID}`,
+          JSON.stringify(filteredResults)
+        );
+        cachedDataRef.current = filteredResults;
+        setLoading(false);
+      } catch (error) {
+        console.error("Error in fetchAndDisplay:", error);
+        alert("An error occurred while loading data. Please try again.");
+        setLoading(false);
+      }
     };
 
     fetchAndDisplay();
@@ -310,27 +441,41 @@ function RouteComponent() {
             <div key={i} className="bg-white p-4 rounded-lg shadow">
               <h2 className="text-xl font-semibold">{store.storeName}</h2>
               <div className="mt-2 space-y-2">
-                {store.items.map((item, j) => (
-                  <div key={j} className="flex justify-between py-2 border-b">
-                    <span>{item.Name}</span>
-                    <span className="font-medium">${item.Price}</span>
-                    <button
-                      onClick={() => {
-                        if (item) {
-                          navigate({
-                            to: "/create-order", // Navigate to the create-order route
-                            state: {...item, storeName: store.storeName, quantity: 1, totalPrice: item.Price} // Pass the item object as state
-                          });
-                        } else {
-                          alert('Item data is missing!');
-                        }
-                      }}
-                      className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
-                    >
-                      +
-                    </button>
-                  </div>
-                ))}
+                {store.items.map(
+                  (item, j) => (
+                      <div
+                        key={j}
+                        className="flex justify-between py-2 border-b"
+                      >
+                        <span className="max-w-[60%] truncate">{item.Name}</span>
+                        <div>
+                          <span className="font-medium pr-4 w-[60px]">
+                            ${item.Price}
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (item) {
+                                navigate({
+                                  to: "/create-order", // Navigate to the create-order route
+                                  state: {
+                                    ...item,
+                                    storeName: store.storeName,
+                                    quantity: 1,
+                                    totalPrice: item.Price,
+                                  }, // Pass the item object as state
+                                });
+                              } else {
+                                alert("Item data is missing!");
+                              }
+                            }}
+                            className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )
+                )}
               </div>
             </div>
           ))}
