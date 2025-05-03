@@ -166,7 +166,7 @@ const handleDeleteOrder = async (orderId: number) => {
               {orderItems.map(item => (
                 <li key={item.Item_ID} className="flex justify-between items-center py-2">
                   <div>
-                    <p className="font-bold">{item.Item.Item_Name}</p>
+                    <p className="font-bold">{item.Item.Name}</p>
                     <p className="text-gray-500">Quantity: {item.Quantity}</p>
                     <p className="text-gray-500">Total: ${item.Individual_Total}</p>
                     <p className="text-gray-500">Store: {item.Item.Store.Name}</p>
