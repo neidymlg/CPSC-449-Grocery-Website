@@ -176,9 +176,10 @@ function RouteComponent() {
       try {
         const my_token = await getToken(); // Fetch the token from the backend
 
+        const filteredQuery = query.split(' ').slice(0, 8).join(' ');
         const response = await axios.get(`/api/kroger/items`, {
           params: {
-            query: query,
+            query: filteredQuery,
             store_id: store_id,
             token: my_token,
           },
@@ -361,6 +362,7 @@ function RouteComponent() {
 
         //if outdated, use a for loop to update
         if (outdatedItems.length > 0) {
+          alert("outdated");
           for (const item of outdatedItems) {
             //Call API
             const itemData = await findItem(item.Name, item.Store_ID);
@@ -382,9 +384,6 @@ function RouteComponent() {
               const itemPrice = itemData[i].price;
               await addNewItem(stores, itemName, itemPrice);
             }
-            //  const itemName = "item z";
-            //  const itemPrice = 10;
-            //  await addNewItem(stores, itemName, itemPrice);
           }
         }
 
