@@ -8,49 +8,49 @@ export const Route = createFileRoute("/findproduct")({
 
 function RouteComponent() {
   //for adding in new products, a user can type in items such as "milk" or "eggs"
-  const [searchTerm, setSearchTerm] = useState(""); 
+  const [searchTerm, setSearchTerm] = useState("");
+
   // For storing products fetched from the backend
-  const [products, setProducts] = useState<{ id: number, name: string }[]>([]); 
+  const [products, setProducts] = useState<{ id: number; name: string }[]>([]);
   const navigate = useNavigate(); //for navigating to next page
 
-useEffect(() => {
-  const fetchInitialData = async () => {
-  
-    // Fetch products from db, and add to session Storage
-    try {
-      const response = await axios.get("/api/products");
-      console.log("Fetched products:", response.data);
-      setProducts(response.data);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
-  };
-  
-  fetchInitialData();
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      // Fetch products from db, and add to session Storage
+      try {
+        const response = await axios.get("/api/products");
+        console.log("Fetched products:", response.data);
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchInitialData();
   }, []);
-  
-  const handleAddProduct = async () => {  
+
+  const handleAddProduct = async () => {
     // Check if the search term is not empty
     if (searchTerm.trim() !== "") {
       try {
-
         //check if product is already there in list of fetched items
         const exProduct = products.find(
           (product) => product.name.toLowerCase() === searchTerm
         );
-  
+
         if (exProduct) {
           //product if found, uses the current product to move to the next page
           console.log("Product already exists:", exProduct);
           //navigates to next page
           navigate({
-            to: `/display-items/${exProduct.id.toString()}`
+            to: `/display-items/${exProduct.id.toString()}`,
+            search: { name: exProduct.name },
           });
         } else {
           // adds product to the db
           const response = await axios.post("/api/products", {
             name: searchTerm.toLowerCase(),
-          });       
+          });
           console.log("Added product:", response.data);
           //adds product into sessionStorage so datalist can see it
           setProducts([...products, response.data]);
@@ -58,7 +58,8 @@ useEffect(() => {
           setSearchTerm("");
           //navigates to next page
           navigate({
-            to: `/display-items/${response.data.id}`
+            to: `/display-items/${response.data.id}`,
+            search: { name: searchTerm },
           });
         }
       } catch (error) {
@@ -71,7 +72,7 @@ useEffect(() => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-  
+
   return (
     <div>
       <section className="text-center mb-10">

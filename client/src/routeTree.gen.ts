@@ -17,6 +17,7 @@ import { Route as FindproductImport } from './routes/findproduct'
 import { Route as CreateOrderImport } from './routes/create-order'
 import { Route as CreateAccountImport } from './routes/create-account'
 import { Route as AboutImport } from './routes/about'
+import { Route as ApiProductSearchImport } from './routes/ApiProductSearch'
 import { Route as IndexImport } from './routes/index'
 import { Route as DisplayItemsIdImport } from './routes/display-items/$id'
 
@@ -58,6 +59,12 @@ const AboutRoute = AboutImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const ApiProductSearchRoute = ApiProductSearchImport.update({
+  id: '/ApiProductSearch',
+  path: '/ApiProductSearch',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
@@ -79,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/ApiProductSearch': {
+      id: '/ApiProductSearch'
+      path: '/ApiProductSearch'
+      fullPath: '/ApiProductSearch'
+      preLoaderRoute: typeof ApiProductSearchImport
       parentRoute: typeof rootRoute
     }
     '/about': {
@@ -137,6 +151,7 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ApiProductSearch': typeof ApiProductSearchRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
   '/create-order': typeof CreateOrderRoute
@@ -148,6 +163,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ApiProductSearch': typeof ApiProductSearchRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
   '/create-order': typeof CreateOrderRoute
@@ -160,6 +176,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/ApiProductSearch': typeof ApiProductSearchRoute
   '/about': typeof AboutRoute
   '/create-account': typeof CreateAccountRoute
   '/create-order': typeof CreateOrderRoute
@@ -173,6 +190,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ApiProductSearch'
     | '/about'
     | '/create-account'
     | '/create-order'
@@ -183,6 +201,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ApiProductSearch'
     | '/about'
     | '/create-account'
     | '/create-order'
@@ -193,6 +212,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ApiProductSearch'
     | '/about'
     | '/create-account'
     | '/create-order'
@@ -205,6 +225,7 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiProductSearchRoute: typeof ApiProductSearchRoute
   AboutRoute: typeof AboutRoute
   CreateAccountRoute: typeof CreateAccountRoute
   CreateOrderRoute: typeof CreateOrderRoute
@@ -216,6 +237,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiProductSearchRoute: ApiProductSearchRoute,
   AboutRoute: AboutRoute,
   CreateAccountRoute: CreateAccountRoute,
   CreateOrderRoute: CreateOrderRoute,
@@ -236,6 +258,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/ApiProductSearch",
         "/about",
         "/create-account",
         "/create-order",
@@ -247,6 +270,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/ApiProductSearch": {
+      "filePath": "ApiProductSearch.tsx"
     },
     "/about": {
       "filePath": "about.tsx"

@@ -5,8 +5,7 @@ module.exports = (sequelize) => {
     'Store',
     {
       ID: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
+        type: DataTypes.STRING(8),
         primaryKey: true,
       },
       geom_loc: {

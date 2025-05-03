@@ -42,7 +42,7 @@ router.get('/check', async (req, res) => {
 
   try {
     const results = await Store.findAll({
-      attributes: ['ID'],
+      attributes: ['ID', 'Name'],
       where: db.Sequelize.where(
         db.Sequelize.fn(
           'ST_Distance_Sphere',
@@ -50,8 +50,18 @@ router.get('/check', async (req, res) => {
           db.Sequelize.fn('POINT', LONG, LAT)
         ),
         '<',
-        16093.44 //10 miles
+        4000000 // 4,000 kilometers
       ),
+      order: [
+        [
+          db.Sequelize.fn(
+            'ST_Distance_Sphere',
+            db.Sequelize.col('geom_loc'),
+            db.Sequelize.fn('POINT', LONG, LAT)
+          ),
+          'ASC',
+        ],
+      ],
     });
     const storeIDs = results.map(store => store.ID);
     res.json(storeIDs);
@@ -92,6 +102,12 @@ router.post('/', async (req, res) => {
   }
 
   try {
+    const existingStore = await Store.findOne({ where: { ID: storeID } });
+    if (existingStore) {
+      console.log(`Duplicate store skipped: ${storeID}`);
+      return res.status(200).json({ message: 'Store already exists', id: existingStore.ID });
+    }
+
     const store = await Store.create({
       ID: storeID,
       geom_loc: db.Sequelize.fn('ST_GeomFromText', `POINT(${LONG} ${LAT})`),

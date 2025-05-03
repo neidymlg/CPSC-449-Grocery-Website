@@ -1,70 +1,97 @@
-import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useParams,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
+
 import axios from "axios";
 
 export const Route = createFileRoute("/display-items/$id")({
-    component: RouteComponent,
-  });
+  component: RouteComponent,
+});
 
 function RouteComponent() {
   //gets productID from findproduct.tsx, this will show up in the url
   const { id: productID } = useParams({ from: "/display-items/$id" });
+  const search = useSearch({ from: "/display-items/$id" });
+  const productName = search.name; // Access the `name` parameter
 
+  if (!productName) {
+    alert("Error in finding product name");
+    return;
+  }
   //for storing lat/long per rerender (so it does not have to go to sessionStorage everytime )
-  const latitudeRef = useRef<string | null>(null); 
+  const latitudeRef = useRef<string | null>(null);
   const longitudeRef = useRef<string | null>(null);
 
   //storing information for rerender
-  const cachedDataRef = useRef<{
-    storeName: string;
-    items: { Name: string; Price: number; Store_ID: number; Product_ID: number; Item_ID: number; ID: number }[];
-  }[] | null>(null);
+  const cachedDataRef = useRef<
+    | {
+        storeName: string;
+        items: {
+          Name: string;
+          Price: number;
+          Store_ID: string;
+          Product_ID: number;
+          Item_ID: number;
+          ID: number;
+        }[];
+      }[]
+    | null
+  >(null);
 
   // used to ensure the async function/cached items loads
   const [loading, setLoading] = useState(true);
 
   // for navigating to next page
   const navigate = useNavigate();
-  
 
   useEffect(() => {
-
     //fetches user's lat/long
-    const fetchLocation = async () => { 
+    const fetchLocation = async () => {
       // if location is already stored, will skip
       if (!latitudeRef.current || !longitudeRef.current) {
-
         //if: gets lat/long from sessionStroage to store in Ref (Ref is faster/efficient that SessionStorage)
         //else: store in sessionStorage
         const storedLatitude = sessionStorage.getItem("latitude");
         const storedLongitude = sessionStorage.getItem("longitude");
-    
+
         if (storedLatitude && storedLongitude) {
           latitudeRef.current = storedLatitude;
           longitudeRef.current = storedLongitude;
-          console.log("Using stored location:", storedLatitude, storedLongitude);
+          console.log(
+            "Using stored location:",
+            storedLatitude,
+            storedLongitude
+          );
         } else {
           //get geolocation of user
           try {
-            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
-              } else {
-                reject(new Error("Geolocation is not supported by this browser."));
+            const position = await new Promise<GeolocationPosition>(
+              (resolve, reject) => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(resolve, reject);
+                } else {
+                  reject(
+                    new Error("Geolocation is not supported by this browser.")
+                  );
+                }
               }
-            });
-    
+            );
+
             const lat = position.coords.latitude.toString();
             const lon = position.coords.longitude.toString();
-    
+
             //set the values into the sessionStorage, so  if user reloads session, it will not need to ask again
             sessionStorage.setItem("latitude", lat);
             sessionStorage.setItem("longitude", lon);
-    
-            //sets the values into Reference to avoid redoing function if rerendering 
+
+            //sets the values into Reference to avoid redoing function if rerendering
             latitudeRef.current = lat;
             longitudeRef.current = lon;
-    
+
             console.log("New location fetched:", lat, lon);
           } catch (error) {
             console.error("Error fetching location:", error);
@@ -99,8 +126,13 @@ function RouteComponent() {
     async function findStores(LAT: string, LONG: string) {
       try {
         const token = await getToken();
+<<<<<<< HEAD
         const searchLimit = 5;
         const searchRange = 1;
+=======
+        const searchLimit = 10;
+        const searchRange = 10;
+>>>>>>> 8ea6876b72e66954eafd8b9256a5736db400e833
 
         // Fetch stores from the backend proxy
         const response = await axios.get(`/api/kroger/locations`, {
@@ -158,6 +190,10 @@ function RouteComponent() {
         });
 
         if (!response.data || response.data.length === 0) {
+<<<<<<< HEAD
+=======
+          alert("no items");
+>>>>>>> 8ea6876b72e66954eafd8b9256a5736db400e833
           console.warn("No items found for query:", query);
           return [];
         }
@@ -204,23 +240,22 @@ function RouteComponent() {
     /******************************************************************************/
 
     //checks if we have stored any nearby stores, passes the storeID
-    const checkNearbyStores = async () => {    
-      try{
+    const checkNearbyStores = async () => {
+      try {
         const response = await axios.get("/api/store/check", {
           params: { LONG: longitudeRef.current, LAT: latitudeRef.current },
         });
         return response.data;
-      }
-      catch (error) {
+      } catch (error) {
         console.log("Error fetching Stores", error);
       }
     };
-  
+
     //checks if items have not updated recently, returns all item information
-    const checkItemsForCurrentDay = async (storeIDs: number[]) => {
-      try {    
+    const checkItemsForCurrentDay = async (storeIDs: string[]) => {
+      try {
         const response = await axios.get("/api/item/check_current_day", {
-          params: { StoreIDs: storeIDs.join(','), ProductID: productID },
+          params: { StoreIDs: storeIDs.join(","), ProductID: productID },
         });
         return response.data;
       } catch (error) {
@@ -228,9 +263,14 @@ function RouteComponent() {
         throw error;
       }
     };
-    
+
     //adds new store, returns id of all stores
-    const addNewStore = async (storeID: number, longitude: number, latitude: number, name: string) => {
+    const addNewStore = async (
+      storeID: string,
+      longitude: number,
+      latitude: number,
+      name: string
+    ) => {
       try {
         const response = await axios.post("/api/store", {
           storeID: storeID,
@@ -239,7 +279,6 @@ function RouteComponent() {
           Name: name,
         });
         console.log("Successfully read data for Store ID: ", response.data.id);
-        return response.data.id; // Returns the ID of the newly added store
       } catch (error) {
         console.error("Error adding new store:", error);
         throw error;
@@ -247,12 +286,7 @@ function RouteComponent() {
     };
 
     //adds new item into empty store
-    const addNewItem = async (
-      storeId: number,
-      name: string,
-      price: number
-    ) => 
-    {
+    const addNewItem = async (storeId: string, name: string, price: number) => {
       try {
         const response = await axios.post("/api/item", {
           StoreID: storeId,
@@ -268,15 +302,22 @@ function RouteComponent() {
     };
 
     //updates item's price
-    const updateItem = async (itemId: number, storeId: number, price: number) => {
+    const updateItem = async (
+      itemId: number,
+      storeId: string,
+      price: number
+    ) => {
       try {
         const response = await axios.put(`/api/item`, {
           ID: itemId,
           StoreID: storeId,
-          ProductID: productID, 
+          ProductID: productID,
           Price: price,
         });
-        console.log(`Updated item with ID: ${itemId}, Response:`, response.data);
+        console.log(
+          `Updated item with ID: ${itemId}, Response:`,
+          response.data
+        );
       } catch (error) {
         console.error(`Error updating item with ID: ${itemId}`, error);
         throw error;
@@ -284,12 +325,12 @@ function RouteComponent() {
     };
 
     //checks if store doesn't have items, returns storeIDS
-    const checkEmptyStores = async (storeIDs: number[]) => {
+    const checkEmptyStores = async (storeIDs: string[]) => {
       try {
         const response = await axios.get("/api/item/check_no_items", {
-          params: { 
-            StoreIDs: storeIDs.join(','), 
-            ProductID: productID 
+          params: {
+            StoreIDs: storeIDs.join(","),
+            ProductID: productID,
           },
         });
         return response.data.emptyStoreIDs; // Returns array of store IDs
@@ -299,65 +340,60 @@ function RouteComponent() {
       }
     };
 
-    //DELETE ???????
-    // const getLongLat = async (storeID: number) =>{
-    //   try {
-    //     const response = await axios.get(`/api/store/${storeID}`);
-    //     return response;
-    //   } catch (error) {
-    //     console.error("Error with fetching long/lat:", error);
-    //     throw error;
-    //   }
-    // }
-
     const fetchStoresAndItems = async () => {
       let nearbyStores = await checkNearbyStores();
-      
+
       // if: for new stores and items
       // else: for nearby stores
       if (!nearbyStores || nearbyStores.length === 0) {
-        // ADD API to this section !!!!!
+        const stores = await findStores(
+          latitudeRef.current,
+          longitudeRef.current
+        );
 
-        const storeID = 1;
-        const storeLat = 33.7572;
-        const storeLon = -117.9111;
-        const storeName = "Store Name 6";
-        await addNewStore(storeID, storeLon, storeLat, storeName);
-
-        nearbyStores.push(storeID); // Add the new store ID to nearbyStores
-
-        // call API for finding items
-        const itemName = "item 3";
-        const itemPrice = 1;
-        await addNewItem(storeID, itemName, itemPrice);
-
-        return nearbyStores;
-
-      }
-      else{
-       //checks if any items are out of date, returns item information
-       const outdatedItems = await checkItemsForCurrentDay(nearbyStores);
-       //checks if any store is empty, returns store information
-       const emptyItems = await checkEmptyStores(nearbyStores);
-        
-       //if outdated, use a for loop to update
-        if (outdatedItems.length > 0) {
-            for (const item of outdatedItems) {
-              //Call API 
-
-              const itemPrice = 10;
-              await updateItem(item.ID, item.Store_ID, itemPrice);
-            }
+        for (let i = 0; i < stores.length; i++) {
+          const storeID = stores[i].id.toString();
+          const storeLat = stores[i].lat;
+          const storeLon = stores[i].long;
+          const storeName = stores[i].name;
+          await addNewStore(storeID, storeLon, storeLat, storeName);
+          nearbyStores.push(storeID); // Add the new store ID to nearbyStores
+          await processBatchAndAddItems(storeID, productName);
         }
 
-        if(emptyItems.length > 0){
-          for (const stores of emptyItems){
-            //Call API and insert items using the LONG/LAT to find the Stores
-            
+        return nearbyStores;
+      } else {
+        //checks if any items are out of date, returns item information
+        const outdatedItems = await checkItemsForCurrentDay(nearbyStores);
+        //checks if any store is empty, returns store information
+        const emptyItems = await checkEmptyStores(nearbyStores);
 
-            const itemName = "item z";
-            const itemPrice = 1;
-            await addNewItem(stores, itemName, itemPrice);
+        //if outdated, use a for loop to update
+        if (outdatedItems.length > 0) {
+          for (const item of outdatedItems) {
+            //Call API
+            const itemData = await findItem(item.Name, item.Store_ID);
+            for (let i = 0; i < itemData.length; i++) {
+              const itemPrice = itemData[i].price;
+              await updateItem(item.ID, item.Store_ID, itemPrice);
+            }
+          }
+        }
+
+        if (emptyItems.length > 0) {
+          for (const stores of emptyItems) {
+            //Call API and insert items using the LONG/LAT to find the Stores
+
+            const itemData = await findItem(productName, stores);
+
+            for (let i = 0; i < itemData.length; i++) {
+              const itemName = itemData[i].name;
+              const itemPrice = itemData[i].price;
+              await addNewItem(stores, itemName, itemPrice);
+            }
+            //  const itemName = "item z";
+            //  const itemPrice = 10;
+            //  await addNewItem(stores, itemName, itemPrice);
           }
         }
 
@@ -365,34 +401,39 @@ function RouteComponent() {
       }
     };
 
-    const displayItems = async (nearbyStores: number[]) => {
+    const displayItems = async (nearbyStores: string[]) => {
       const results = [];
       //gets the store's name, and all items in the store
       for (const store of nearbyStores) {
-        try{
+        try {
           const storeName = await axios.get("/api/store/getname", {
             params: { storeId: store },
           });
 
           const item = await axios.get("/api/item/display", {
-            params: { StoreID: store, ProductID: productID }
+            params: { StoreID: store, ProductID: productID },
           });
 
-          // alert("Item ID: " + item.data[0].ID);
-          // alert("Store ID: " + item.data[0].Store_ID);
           results.push({
             storeName: storeName.data.Name,
-            items: item.data.map((item: { Name: string; Price: number, Store_ID: number, Product_ID: number, Item_ID: number, ID: number }) => ({
-              Name: item.Name,
-              Price: item.Price,
-              Store_ID: item.Store_ID,
-              Product_ID: item.Product_ID,
-              Item_ID: item.ID,
-            }))
+            items: item.data.map(
+              (item: {
+                Name: string;
+                Price: number;
+                Store_ID: string;
+                Product_ID: number;
+                Item_ID: number;
+                ID: number;
+              }) => ({
+                Name: item.Name,
+                Price: item.Price,
+                Store_ID: item.Store_ID,
+                Product_ID: item.Product_ID,
+                Item_ID: item.ID,
+              })
+            ),
           });
-
-        }
-        catch (error) {
+        } catch (error) {
           console.log("Error fetching Stores/Items", error);
         }
       }
@@ -401,18 +442,34 @@ function RouteComponent() {
     };
 
     const fetchAndDisplay = async () => {
-    try {
-      setLoading(true);
-      // Ensure location is fetched first, and cachedItems are loaded first 
-      await fetchLocation();
-      const cached = sessionStorage.getItem(`cachedData_${productID}`);
-      
-      //if cached items exist, parse them, set loading to false and stop
-      if (cached) {
-        cachedDataRef.current = JSON.parse(cached); 
+      try {
+        setLoading(true);
+        // Ensure location is fetched first, and cachedItems are loaded first
+        await fetchLocation();
+        const cached = sessionStorage.getItem(`cachedData_${productID}`);
+
+        //if cached items exist, parse them, set loading to false and stop
+        if (cached) {
+          cachedDataRef.current = JSON.parse(cached);
+          setLoading(false);
+          return;
+        }
+
+        //if not, get all stores and items, set the cached items in sessionStorage
+        const nearbyStores = await fetchStoresAndItems();
+        const results = await displayItems(nearbyStores);
+        sessionStorage.setItem(
+          `cachedData_${productID}`,
+          JSON.stringify(results)
+        );
+        cachedDataRef.current = results;
         setLoading(false);
-        return;
+      } catch (error) {
+        console.error("Error in fetchAndDisplay:", error);
+        alert("An error occurred while loading data. Please try again.");
+        setLoading(false);
       }
+<<<<<<< HEAD
 
         //if not, get all stores and items, set the cached items in sessionStorage
         const nearbyStores = await fetchStoresAndItems();
@@ -429,6 +486,8 @@ function RouteComponent() {
         alert("An error occurred while loading data. Please try again.");
         setLoading(false);
       }
+=======
+>>>>>>> 8ea6876b72e66954eafd8b9256a5736db400e833
     };
 
     fetchAndDisplay();
@@ -442,14 +501,25 @@ function RouteComponent() {
               <h2 className="text-xl font-semibold">{store.storeName}</h2>
               <div className="mt-2 space-y-2">
                 {store.items.map(
+<<<<<<< HEAD
                   (item, j) => (
+=======
+                  (item, j) =>
+                    item.Price > 0 && (
+>>>>>>> 8ea6876b72e66954eafd8b9256a5736db400e833
                       <div
                         key={j}
                         className="flex justify-between py-2 border-b"
                       >
+<<<<<<< HEAD
                         <span className="max-w-[60%] truncate">{item.Name}</span>
                         <div>
                           <span className="font-medium pr-4 w-[60px]">
+=======
+                        <span>{item.Name}</span>
+                        <div>
+                          <span className="font-medium pr-4">
+>>>>>>> 8ea6876b72e66954eafd8b9256a5736db400e833
                             ${item.Price}
                           </span>
                           <button

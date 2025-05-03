@@ -8,12 +8,27 @@ const Item = db.Item; // Ensure the correct model name
 router.post('/', async (req, res) => {
   const { StoreID, ProductID, Name, Price } = req.body;
 
-  if (!StoreID || !ProductID || !Name || !Price) {
+  if (!StoreID || !ProductID || !Name || Price === null || Price === undefined) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const truncatedName = Name.length > 200 ? Name.substring(0, 199) : Name;
+
   try {
-    const item = await Item.create({ Store_ID: StoreID, Product_ID: ProductID, Name: Name, Price: Price });
+    const existingItem = await Item.findOne({
+      where: {
+        Store_ID: StoreID,
+        Product_ID: ProductID,
+        Name: truncatedName
+      },
+    });
+  
+    if (existingItem) {
+      console.log(`Duplicate item skipped: StoreID=${StoreID}, ProductID=${ProductID}`);
+      return res.status(200).json({ message: 'Item already exists', id: existingItem.ID });
+    }
+
+    const item = await Item.create({ Store_ID: StoreID, Product_ID: ProductID, Name: truncatedName, Price: Price });
     console.log("Store item added:", item.ID);
     res.json({ id: item.ID });
   } catch (error) {

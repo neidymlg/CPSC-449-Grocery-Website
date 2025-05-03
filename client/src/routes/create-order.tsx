@@ -9,7 +9,7 @@ export const Route = createFileRoute('/create-order')({
 // Define the type for cached items
 type CachedItem = {
   Item_ID: number;
-  Store_ID: number;
+  Store_ID: string;
   Product_ID: number;
   Name: string;
   Price: number;
@@ -55,7 +55,7 @@ function RouteComponent() {
       //checks if items are already existing
       (cachedItem) =>
         cachedItem.Item_ID === item.Item_ID &&
-        cachedItem.Store_ID === item.Store_ID &&
+        cachedItem.Store_ID == item.Store_ID &&
         cachedItem.Product_ID === item.Product_ID
     );
 
