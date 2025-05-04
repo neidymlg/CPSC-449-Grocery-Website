@@ -41,15 +41,18 @@ router.get("/kroger/locations", async (req, res) => {
   const { lat, long, radiusInMiles, limit, token } = req.query;
 
   try {
-    const response = await fetch(`https://api-ce.kroger.com/v1/locations?filter.latLong=${lat},${long}&filter.radiusInMiles=${radiusInMiles}&filter.limit=${limit}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
+    const response = await fetch(`https://api-ce.kroger.com/v1/locations?filter.latLong.near=${lat},${long}&filter.radiusInMiles=${radiusInMiles}&filter.limit=${limit}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }
+    );
 
     const data = await response.json();
+    console.log("Full API response:", data);
     res.json(data);
   } catch (error) {
     console.error("Error fetching Kroger locations:", error);
@@ -75,13 +78,6 @@ router.get("/kroger/items", async (req, res) => {
           Accept: "application/json",
         },
       });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`Error fetching items ${response.status}: ${response.statusText}`);
-        console.error(errorBody);
-        return res.status(response.status).json({ error: "Failed to fetch items" });
-      }
 
       const data = await response.json();
       console.log("Kroger API Response:", JSON.stringify(data, null, 2));
