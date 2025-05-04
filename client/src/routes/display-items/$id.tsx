@@ -127,8 +127,7 @@ function RouteComponent() {
       try {
         const token = await getToken();
         const searchLimit = 5;
-        const searchRange = 1;
-
+        const searchRange = 10;
         // Fetch stores from the backend proxy
         const response = await axios.get(`/api/kroger/locations`, {
           params: {

@@ -50,7 +50,7 @@ router.get('/check', async (req, res) => {
           db.Sequelize.fn('POINT', LONG, LAT)
         ),
         '<',
-        4000000 // 4,000 kilometers
+        16093 //10 miles as meters
       ),
       order: [
         [
